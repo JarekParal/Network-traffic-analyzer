@@ -7,9 +7,9 @@
 
 #include <cstdint>
 
-int16_t toInt16(char * buffer, int bufPointer);
-uint16_t toUint16(char * buffer, int bufPointer);
-int32_t toInt32(char * buffer, int bufPointer);
-uint32_t toUint32(char * buffer, int bufPointer);
+int16_t toInt16(char* buffer, int& bufPointer, bool bigEndian = false);
+uint16_t toUint16(char* buffer, int& bufPointer, bool bigEndian = false);
+int32_t toInt32(char* buffer, int& bufPointer, bool bigEndian = false);
+uint32_t toUint32(char* buffer, int& bufPointer, bool bigEndian = false);
 
 #endif //ISA_PROJECT_CONVERT_H
