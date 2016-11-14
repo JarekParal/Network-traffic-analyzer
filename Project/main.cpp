@@ -3,16 +3,15 @@
 #include <fstream>
 #include <cstring>
 
-#include "convert.h"
 #include "structures.h"
 
 using namespace std;
 
 int main() {
-
     //cout << " ----- Init variable << endl;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
+    ether_header_t etherHeader;
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
@@ -31,7 +30,6 @@ int main() {
     pcapFile.seekg(0, pcapFile.beg);
 
     cout << "Size of pcap file: " << sizeOfPcap << endl;
-
     int pcapPointer = 0;
     char * buffer;
     buffer = new char [sizeOfPcap];
@@ -50,9 +48,7 @@ int main() {
 //    while(pcapFile)
 //        cout << std::hex << pcapFile.get();
 
-
     cout << " ----- Work with buffer " << endl;
-
     uint32_t num = 0;
 //  num = toUint32(buffer, pcapPointer);
     memcpy(&num, (buffer + 24), 4);
@@ -61,17 +57,18 @@ int main() {
     cout << std::dec << num << endl;
 
     cout << " ----- Work with global header" << endl;
-
-    readPcapGlobalHeader(globalHeader, buffer, pcapPointer);
+    parsePcapGlobalHeader(globalHeader, buffer, pcapPointer);
     printPcapGlobalHeader(globalHeader);
 
     cout << " ----- Work with packet header" << endl;
-
-    readPcapPacketHeader(packetHeader, buffer, pcapPointer);
+    parsePcapPacketHeader(packetHeader, buffer, pcapPointer);
     printPcapPacketHeader(packetHeader);
 
-    cout << " ----- Read counter" << endl;
+    cout << " ----- Parse ethernet header" << endl;
+    parseEthernetHeader(etherHeader, buffer, pcapPointer);
+    printEthernetHeader(etherHeader);
 
+    cout << " ----- Read counter" << endl;
     cout << "gcount: " << pcapFile.gcount() << endl;
 
     return 0;

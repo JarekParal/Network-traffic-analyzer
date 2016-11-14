@@ -7,13 +7,12 @@
 int16_t toInt16(char* buffer, int& bufPointer, bool bigEndian)
 {
     bufPointer += 2;
-
     if(bigEndian) {
-        return  (((int16_t)buffer[bufPointer - 1]) << 8)  & 0xFF00 |
-                ((int16_t)buffer[bufPointer - 2])         & 0x00FF;
+        return  (static_cast<int16_t>(buffer[bufPointer - 1]) << 8)  & 0xFF00 |
+                (static_cast<int16_t>(buffer[bufPointer - 2]))       & 0x00FF;
     } else {
-        return  (((int16_t)buffer[bufPointer - 2]) << 8)  & 0xFF00 |
-                ((int16_t)buffer[bufPointer - 1])         & 0x00FF;
+        return  (static_cast<int16_t>(buffer[bufPointer - 2]) << 8)  & 0xFF00 |
+                (static_cast<int16_t>(buffer[bufPointer - 1]))       & 0x00FF;
     }
 }
 
@@ -27,15 +26,15 @@ int32_t toInt32(char* buffer, int& bufPointer, bool bigEndian)
     bufPointer += 4;
 
     if(bigEndian) {
-        return (((int32_t) buffer[bufPointer - 4]) << 24) & 0xFF000000 |
-               (((int32_t) buffer[bufPointer - 3]) << 16) & 0x00FF0000 |
-               (((int32_t) buffer[bufPointer - 2]) << 8)  & 0x0000FF00 |
-               ((int32_t) buffer[bufPointer - 1])         & 0x000000FF;
+        return (static_cast<int32_t>(buffer[bufPointer - 4]) << 24) & 0xFF000000 |
+               (static_cast<int32_t>(buffer[bufPointer - 3]) << 16) & 0x00FF0000 |
+               (static_cast<int32_t>(buffer[bufPointer - 2]) << 8)  & 0x0000FF00 |
+                static_cast<int32_t>(buffer[bufPointer - 1])        & 0x000000FF;
     } else {
-        return (((int32_t) buffer[bufPointer - 1]) << 24) & 0xFF000000 |
-               (((int32_t) buffer[bufPointer - 2]) << 16) & 0x00FF0000 |
-               (((int32_t) buffer[bufPointer - 3]) << 8)  & 0x0000FF00 |
-               ((int32_t) buffer[bufPointer - 4])         & 0x000000FF;
+        return (static_cast<int32_t>(buffer[bufPointer - 1]) << 24) & 0xFF000000 |
+               (static_cast<int32_t>(buffer[bufPointer - 2]) << 16) & 0x00FF0000 |
+               (static_cast<int32_t>(buffer[bufPointer - 3]) << 8)  & 0x0000FF00 |
+                static_cast<int32_t>(buffer[bufPointer - 4])        & 0x000000FF;
     }
 }
 

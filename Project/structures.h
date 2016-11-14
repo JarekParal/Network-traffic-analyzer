@@ -6,7 +6,9 @@
 #define ISA_PROJECT_STRUCTURES_H
 
 #include <cstdint>
+#include <cstring>
 #include <iostream>
+#include <iomanip>
 
 #include "convert.h"
 
@@ -32,10 +34,36 @@ typedef struct pcap_packet_hdr_s {
     // suma = 32 * 4 bits = 128 bits = 16 bytes
 } pcap_packet_hdr_t; //pcaprec_hdr_t;
 
+// Ethernet header description
+// Source (<netinet/in.h>)
+// http://unix.superglobalmegacorp.com/Net2/newsrc/netinet/if_ether.h.html
+// Documentation: https://wiki.wireshark.org/Ethernet
+typedef struct ether_header_s {
+    uint8_t	ether_dhost[6];
+    uint8_t	ether_shost[6];
+    uint16_t ether_type;
+} ether_header_t;
 
-void readPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader, char * buffer, int & pointer);
+#define	ETHERTYPE_PUP	0x0200		/* PUP protocol */
+#define	ETHERTYPE_IP	0x0800		/* IP(v4) protocol */
+#define ETHERTYPE_ARP	0x0806		/* Addr. resolution protocol (ARP) */
+#define ETHERTYPE_IP6	0x08DD		/* IPv6 protocol */
+
+const char ETHERTYPE_IP_STRING[] = "IPv4";
+const char ETHERTYPE_IP6_STRING[] = "IPv6";
+const char ETHERTYPE_ARP_STRING[] = "ARP";
+
+void parsePcapGlobalHeader(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer);
 void printPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader);
-void readPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader, char * buffer, int & pointer);
+
+void parsePcapPacketHeader(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer);
 void printPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader);
+
+void printMacAddr(uint8_t* etherMac);
+const char* giveEtherTypeString(uint16_t etherType);
+void printEtherType(uint16_t etherType);
+
+void parseEthernetHeader(ether_header_t & etherHeader, char* buffer, int& pointer);
+void printEthernetHeader(ether_header_t & etherHeader);
 
 #endif //ISA_PROJECT_STRUCTURES_H
