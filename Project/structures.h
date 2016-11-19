@@ -9,6 +9,9 @@
 #include <cstring>
 #include <iostream>
 #include <iomanip>
+#include <string> // std::to_string
+#include <sstream> // std::ostringstream
+
 
 
 // Source: http://stackoverflow.com/a/4433027
@@ -56,8 +59,15 @@ enum class etherTypeEnum {
     IP  = 0x0800,		/* IP(v4) protocol */
     ARP = 0x0806,		/* Addr. resolution protocol (ARP) */
     IP6 = 0x08DD,		/* IPv6 protocol */
-    e8021Q =  0x0810	/* 802.1Q tag (optional) */
+    e8021Q =  0x0810,	/* 802.1Q tag (optional) */
+    unk = 0x0001        /* unknown - my internal type */
+    //TODO: Check if "unk" work correctly!
 };
+
+const char ETHERTYPE_IP_STRING[] = "IPv4";
+const char ETHERTYPE_IP6_STRING[] = "IPv6";
+const char ETHERTYPE_ARP_STRING[] = "ARP";
+const char ETHERTYPE_UNKNOWN_STRING[] = "Unknown";
 
 // Ethernet struct
 // Source (<netinet/in.h>)
@@ -70,10 +80,6 @@ typedef struct ether_header_s {
     bool vlan802_1Q;
 } ether_header_t;
 
-const char ETHERTYPE_IP_STRING[] = "IPv4";
-const char ETHERTYPE_IP6_STRING[] = "IPv6";
-const char ETHERTYPE_ARP_STRING[] = "ARP";
-const char ETHERTYPE_UNKNOWN_STRING[] = "Unknown";
 
 // ----- IP header
 enum ipVersion {
@@ -83,7 +89,8 @@ enum ipVersion {
 
 enum ipNextHeaderProtocol {
     TCP = 0x06, /* Transmission Control Protocol */
-    UDP = 0x11  /* User Datagram Protocol */
+    UDP = 0x11, /* User Datagram Protocol */
+    unk = 0xFF  /* unknown - my internal type */
 };
 
 const char IPPROT_TCP_STRING[] = "TCP";
@@ -103,6 +110,17 @@ typedef struct ip_header_s {
     uint16_t v6_src[8];
 } ip_header_t;
 
+// ----- TCP/UDP
+typedef struct tcp_udp_header_s {
+    uint16_t dst_port;
+    uint16_t src_port;
+    uint8_t data_offset;
+    uint16_t length;
+    ipNextHeaderProtocol tcp_udp;
+} tcp_udp_header_t;
+
+void printDecAndHex(int num);
+std::string decAndHexStr(int num);
 
 void pcapGlobalHeaderParse(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer);
 void pcapGlobalHeaderPrint(pcap_glob_hdr_t& pcapGlobalHeader);
@@ -110,7 +128,7 @@ void pcapGlobalHeaderPrint(pcap_glob_hdr_t& pcapGlobalHeader);
 void pcapPacketHeaderParse(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer);
 void pcapPacketHeaderPrint(pcap_packet_hdr_t& pcapPacketHeader);
 
-void macAddrPrint(uint8_t* etherMac);
+void macAddrPrint(uint8_t* etherMac, bool printLine = true);
 const char* etherTypeGiveString(etherTypeEnum etherType);
 void etherTypePrint(etherTypeEnum etherType);
 bool etherTypeIsDefine(etherTypeEnum etherType);
@@ -120,8 +138,13 @@ void ethernetHeaderPrint(ether_header_t& etherHeader);
 
 int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer);
 void ipHeaderPrint(ip_header_t& ipHeader);
-void ipAddrPrint(uint8_t* ipAddr);
-void ipAddrPrint(uint16_t* ipAddr);
+void ipAddrPrint(uint8_t* ipAddr, bool printLine = true, bool numAlignment = false);
+void ipAddrPrint(uint16_t* ipAddr, bool printLine = true);
 const char* ipNextHeaderProtocolGiveString(ipNextHeaderProtocol nextHeaderProtocol);
+
+int tcpUdpHeaderParse(tcp_udp_header_t& tcpUdpHeader, char* buffer, int& pointer, ipNextHeaderProtocol tcpUdpProtocol);
+void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader);
+
+void packetPrint(int packetNumber, pcap_packet_hdr_t packetHeader, ether_header_t etherHeader, ip_header_t ipHeader, tcp_udp_header_t tcpUdpHeader, int transferDataSizeByte);
 
 #endif //ISA_PROJECT_STRUCTURES_H
