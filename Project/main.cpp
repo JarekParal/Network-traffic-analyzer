@@ -7,11 +7,17 @@
 
 using namespace std;
 
+void transferDataPrint(int transferData) {
+    cout << "\t TD: " << transferData << " (" << transferData*8 << ")" << endl;
+}
+
 int main() {
     //cout << " ----- Init variable << endl;
+    int transferDataSizeByte = 0;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
     ether_header_t etherHeader;
+    ip_header_t ipHeader;
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
@@ -65,8 +71,28 @@ int main() {
     printPcapPacketHeader(packetHeader);
 
     cout << " ----- Parse ethernet header" << endl;
-    parseEthernetHeader(etherHeader, buffer, pcapPointer);
+    transferDataSizeByte += parseEthernetHeader(etherHeader, buffer, pcapPointer);
     printEthernetHeader(etherHeader);
+    transferDataPrint(transferDataSizeByte);
+
+    cout << " ----- Parse IP header" << endl;
+    switch (etherHeader.ether_type) {
+        case ETHERTYPE_IP:
+        case ETHERTYPE_IP6:
+            transferDataSizeByte += parseIpHeader(ipHeader, buffer, pcapPointer);
+            printIpHeader(ipHeader);
+            transferDataPrint(transferDataSizeByte);
+            break;
+
+        case ETHERTYPE_ARP:
+
+            break;
+
+        default:
+            //802.3 length - https://en.wikipedia.org/wiki/Ethernet_frame#Ethernet_frame_types
+            transferDataSizeByte += etherHeader.ether_type;
+            break;
+    }
 
     cout << " ----- Read counter" << endl;
     cout << "gcount: " << pcapFile.gcount() << endl;

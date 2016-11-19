@@ -4,6 +4,18 @@
 
 #include "convert.h"
 
+int8_t toInt8(char* buffer, int& bufPointer, bool bigEndian)
+{
+    bufPointer++;
+    return  static_cast<int8_t>(buffer[bufPointer - 1]);
+}
+
+uint8_t toUint8(char* buffer, int& bufPointer, bool bigEndian)
+{
+    return static_cast<uint8_t>(toInt8(buffer, bufPointer, bigEndian));
+}
+
+
 int16_t toInt16(char* buffer, int& bufPointer, bool bigEndian)
 {
     bufPointer += 2;
@@ -18,7 +30,7 @@ int16_t toInt16(char* buffer, int& bufPointer, bool bigEndian)
 
 uint16_t toUint16(char* buffer, int& bufPointer, bool bigEndian)
 {
-    return uint16_t(toInt16(buffer, bufPointer, bigEndian));
+    return static_cast<uint16_t>(toInt16(buffer, bufPointer, bigEndian));
 }
 
 int32_t toInt32(char* buffer, int& bufPointer, bool bigEndian)
@@ -40,5 +52,5 @@ int32_t toInt32(char* buffer, int& bufPointer, bool bigEndian)
 
 uint32_t toUint32(char* buffer, int& bufPointer, bool bigEndian)
 {
-    return uint32_t(toInt32(buffer, bufPointer, bigEndian));
+    return static_cast<uint32_t>(toInt32(buffer, bufPointer, bigEndian));
 }

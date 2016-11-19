@@ -10,6 +10,20 @@
 #include <iostream>
 #include <iomanip>
 
+
+// Source: http://stackoverflow.com/a/4433027
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN 1
+#include <winsock2.h>
+#include <windows.h>
+#else
+// unix includes here
+#include <sys/socket.h> /* socket specific definitions */
+#include <netinet/in.h> /* INET constants and stuff */
+#include <arpa/inet.h> /* IP address conversion stuff */
+#endif
+
+
 #include "convert.h"
 
 // pcap file description
@@ -42,16 +56,55 @@ typedef struct ether_header_s {
     uint8_t	ether_dhost[6];
     uint8_t	ether_shost[6];
     uint16_t ether_type;
+    bool vlan802_1Q;
 } ether_header_t;
+
+enum class etherType {
+    PUP = 0x0200,		/* PUP protocol */
+    IP  = 0x0800,		/* IP(v4) protocol */
+    ARP = 0x0806,		/* Addr. resolution protocol (ARP) */
+    IP6 = 0x08DD,		/* IPv6 protocol */
+    e8021Q =  0x0810	/* 802.1Q tag (optional) */
+};
 
 #define	ETHERTYPE_PUP	0x0200		/* PUP protocol */
 #define	ETHERTYPE_IP	0x0800		/* IP(v4) protocol */
+#define	ETHERTYPE_8021Q	0x0810		/* 802.1Q tag (optional) */
 #define ETHERTYPE_ARP	0x0806		/* Addr. resolution protocol (ARP) */
 #define ETHERTYPE_IP6	0x08DD		/* IPv6 protocol */
 
 const char ETHERTYPE_IP_STRING[] = "IPv4";
 const char ETHERTYPE_IP6_STRING[] = "IPv6";
 const char ETHERTYPE_ARP_STRING[] = "ARP";
+
+// IP header
+enum ipVersion {
+    v4 = 4,
+    v6 = 6
+};
+
+enum ipNextHeaderProtocol {
+    TCP = 0x06, /* Transmission Control Protocol */
+    UDP = 0x11  /* User Datagram Protocol */
+};
+
+const char IPPROT_TCP_STRING[] = "TCP";
+const char IPPROT_UDP_STRING[] = "UDP";
+const char IPPROT_UNKNOWN[] = "Unknown";
+
+typedef struct ip_header_s {
+    ipVersion version; // = uint8_t
+    uint8_t header_length;
+    uint16_t total_length;
+    uint16_t payload_length;
+
+    ipNextHeaderProtocol nextHeader_protocol; // = uint8_t
+    uint8_t	v4_dst[4];
+    uint8_t	v4_src[4];
+    uint16_t v6_dst[8];
+    uint16_t v6_src[8];
+} ip_header_t;
+
 
 void parsePcapGlobalHeader(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer);
 void printPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader);
@@ -62,8 +115,12 @@ void printPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader);
 void printMacAddr(uint8_t* etherMac);
 const char* giveEtherTypeString(uint16_t etherType);
 void printEtherType(uint16_t etherType);
+bool etherTypeIsDefine(uint16_t etherType);
 
-void parseEthernetHeader(ether_header_t & etherHeader, char* buffer, int& pointer);
+int parseEthernetHeader(ether_header_t& etherHeader, char* buffer, int& pointer);
 void printEthernetHeader(ether_header_t & etherHeader);
+
+int parseIpHeader(ip_header_t& ipHeader, char* buffer, int& pointer);
+void printIpHeader(ip_header_t & ipHeader);
 
 #endif //ISA_PROJECT_STRUCTURES_H
