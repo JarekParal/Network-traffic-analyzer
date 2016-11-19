@@ -26,6 +26,7 @@
 
 #include "convert.h"
 
+// ----- Pcap
 // pcap file description
 // Source for structure: pcap_glob_hdr_s, pcap_packet_hdr_s
 // https://wiki.wireshark.org/Development/LibpcapFileFormat
@@ -48,18 +49,9 @@ typedef struct pcap_packet_hdr_s {
     // suma = 32 * 4 bits = 128 bits = 16 bytes
 } pcap_packet_hdr_t; //pcaprec_hdr_t;
 
-// Ethernet header description
-// Source (<netinet/in.h>)
-// http://unix.superglobalmegacorp.com/Net2/newsrc/netinet/if_ether.h.html
-// Documentation: https://wiki.wireshark.org/Ethernet
-typedef struct ether_header_s {
-    uint8_t	ether_dhost[6];
-    uint8_t	ether_shost[6];
-    uint16_t ether_type;
-    bool vlan802_1Q;
-} ether_header_t;
 
-enum class etherType {
+// ----- Ethernet
+enum class etherTypeEnum {
     PUP = 0x0200,		/* PUP protocol */
     IP  = 0x0800,		/* IP(v4) protocol */
     ARP = 0x0806,		/* Addr. resolution protocol (ARP) */
@@ -67,17 +59,23 @@ enum class etherType {
     e8021Q =  0x0810	/* 802.1Q tag (optional) */
 };
 
-#define	ETHERTYPE_PUP	0x0200		/* PUP protocol */
-#define	ETHERTYPE_IP	0x0800		/* IP(v4) protocol */
-#define	ETHERTYPE_8021Q	0x0810		/* 802.1Q tag (optional) */
-#define ETHERTYPE_ARP	0x0806		/* Addr. resolution protocol (ARP) */
-#define ETHERTYPE_IP6	0x08DD		/* IPv6 protocol */
+// Ethernet struct
+// Source (<netinet/in.h>)
+// http://unix.superglobalmegacorp.com/Net2/newsrc/netinet/if_ether.h.html
+// Documentation: https://wiki.wireshark.org/Ethernet
+typedef struct ether_header_s {
+    uint8_t	ether_dhost[6];
+    uint8_t	ether_shost[6];
+    etherTypeEnum ether_type; // = uint16_t
+    bool vlan802_1Q;
+} ether_header_t;
 
 const char ETHERTYPE_IP_STRING[] = "IPv4";
 const char ETHERTYPE_IP6_STRING[] = "IPv6";
 const char ETHERTYPE_ARP_STRING[] = "ARP";
+const char ETHERTYPE_UNKNOWN_STRING[] = "Unknown";
 
-// IP header
+// ----- IP header
 enum ipVersion {
     v4 = 4,
     v6 = 6
@@ -106,21 +104,24 @@ typedef struct ip_header_s {
 } ip_header_t;
 
 
-void parsePcapGlobalHeader(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer);
-void printPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader);
+void pcapGlobalHeaderParse(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer);
+void pcapGlobalHeaderPrint(pcap_glob_hdr_t& pcapGlobalHeader);
 
-void parsePcapPacketHeader(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer);
-void printPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader);
+void pcapPacketHeaderParse(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer);
+void pcapPacketHeaderPrint(pcap_packet_hdr_t& pcapPacketHeader);
 
-void printMacAddr(uint8_t* etherMac);
-const char* giveEtherTypeString(uint16_t etherType);
-void printEtherType(uint16_t etherType);
-bool etherTypeIsDefine(uint16_t etherType);
+void macAddrPrint(uint8_t* etherMac);
+const char* etherTypeGiveString(etherTypeEnum etherType);
+void etherTypePrint(etherTypeEnum etherType);
+bool etherTypeIsDefine(etherTypeEnum etherType);
 
-int parseEthernetHeader(ether_header_t& etherHeader, char* buffer, int& pointer);
-void printEthernetHeader(ether_header_t & etherHeader);
+int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer);
+void ethernetHeaderPrint(ether_header_t& etherHeader);
 
-int parseIpHeader(ip_header_t& ipHeader, char* buffer, int& pointer);
-void printIpHeader(ip_header_t & ipHeader);
+int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer);
+void ipHeaderPrint(ip_header_t& ipHeader);
+void ipAddrPrint(uint8_t* ipAddr);
+void ipAddrPrint(uint16_t* ipAddr);
+const char* ipNextHeaderProtocolGiveString(ipNextHeaderProtocol nextHeaderProtocol);
 
 #endif //ISA_PROJECT_STRUCTURES_H

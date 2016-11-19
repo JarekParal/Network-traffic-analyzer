@@ -10,7 +10,7 @@ using std::endl;
 using std::setw;
 using std::setfill;
 
-void parsePcapGlobalHeader(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer) {
+void pcapGlobalHeaderParse(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int& pointer) {
     pcapGlobalHeader.magic_number = toUint32(buffer, pointer);
     pcapGlobalHeader.version_major = toUint16(buffer, pointer);
     pcapGlobalHeader.version_minor = toUint16(buffer, pointer);
@@ -20,7 +20,7 @@ void parsePcapGlobalHeader(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int&
     pcapGlobalHeader.network = toUint32(buffer, pointer);
 }
 
-void printPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader) {
+void pcapGlobalHeaderPrint(pcap_glob_hdr_t& pcapGlobalHeader) {
     cout << std::dec << pcapGlobalHeader.magic_number << " (" << std::hex
          << pcapGlobalHeader.magic_number << ")" << endl;
     cout << std::dec << pcapGlobalHeader.version_major << " (" << std::hex
@@ -37,14 +37,14 @@ void printPcapGlobalHeader(pcap_glob_hdr_t & pcapGlobalHeader) {
          << pcapGlobalHeader.network << ")" << endl;
 }
 
-void parsePcapPacketHeader(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer) {
+void pcapPacketHeaderParse(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer) {
     pcapPacketHeader.ts_sec = toUint32(buffer, pointer);
     pcapPacketHeader.ts_usec = toUint32(buffer, pointer);
     pcapPacketHeader.incl_len = toUint32(buffer, pointer);
     pcapPacketHeader.orig_len = toUint32(buffer, pointer);
 }
 
-void printPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader) {
+void pcapPacketHeaderPrint(pcap_packet_hdr_t& pcapPacketHeader) {
     cout << "Epoch time: " << std::dec
          << pcapPacketHeader.ts_sec << "."
          << pcapPacketHeader.ts_usec << endl;
@@ -61,7 +61,7 @@ void printPcapPacketHeader(pcap_packet_hdr_t & pcapPacketHeader) {
          << std::dec << endl;
 }
 
-void printMacAddr(uint8_t* etherMac) {
+void macAddrPrint(uint8_t* etherMac) {
     for(int i = 0; i < 6; i++){
         cout << std::hex << setw(2) << setfill('0') << static_cast<int>(etherMac[i]);
 
@@ -72,48 +72,54 @@ void printMacAddr(uint8_t* etherMac) {
     }
 }
 
-const char* giveEtherTypeString(uint16_t etherType) {
+const char* etherTypeGiveString(etherTypeEnum etherType) {
     switch(etherType) {
-        case ETHERTYPE_IP:
+        case etherTypeEnum::IP:
             return ETHERTYPE_IP_STRING;
-        case ETHERTYPE_IP6:
+        case etherTypeEnum::IP6:
             return ETHERTYPE_IP6_STRING;
-        case ETHERTYPE_ARP:
+        case etherTypeEnum::ARP:
             return ETHERTYPE_ARP_STRING;
+        default:
+            return ETHERTYPE_UNKNOWN_STRING;
     }
 }
 
-void printEtherType(uint16_t etherType) {
+void etherTypePrint(etherTypeEnum etherType) {
     switch(etherType) {
-        case ETHERTYPE_IP:
+        case etherTypeEnum::IP:
             cout << ETHERTYPE_IP_STRING;
             break;
-        case ETHERTYPE_IP6:
+        case etherTypeEnum::IP6:
             cout << ETHERTYPE_IP6_STRING;
             break;
-        case ETHERTYPE_ARP:
+        case etherTypeEnum::ARP:
             cout << ETHERTYPE_ARP_STRING;
             break;
+        default:
+            cout << ETHERTYPE_UNKNOWN_STRING;
+            break;
+
     }
 }
 
-bool etherTypeIsDefine(uint16_t etherType) {
-    return etherType >= 0x0600;
+bool etherTypeIsDefine(etherTypeEnum etherType) {
+    return static_cast<int>(etherType) >= 0x0600;
 }
 
-int parseEthernetHeader(ether_header_t& etherHeader, char* buffer, int& pointer) {
+int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer) {
     int pointerStartValue = pointer;
 
     memcpy(etherHeader.ether_dhost, buffer + pointer, 6);
     pointer += 6;
     memcpy(etherHeader.ether_shost, buffer + pointer, 6);
     pointer += 6;
-    etherHeader.ether_type = toUint16(buffer, pointer);
+    etherHeader.ether_type = static_cast<etherTypeEnum>(toUint16(buffer, pointer));
 
-    if(etherHeader.ether_type == ETHERTYPE_8021Q) {
+    if(etherHeader.ether_type == etherTypeEnum::e8021Q) {
         etherHeader.vlan802_1Q = true;
         pointer += 2;
-        etherHeader.ether_type = toUint16(buffer, pointer);
+        etherHeader.ether_type = static_cast<etherTypeEnum>(toUint16(buffer, pointer));
     } else {
         etherHeader.vlan802_1Q = false;
     }
@@ -125,21 +131,21 @@ int parseEthernetHeader(ether_header_t& etherHeader, char* buffer, int& pointer)
 //    pointer += 2;
 }
 
-void printEthernetHeader(ether_header_t& etherHeader) {
+void ethernetHeaderPrint(ether_header_t& etherHeader) {
     cout << "Dst: ";
-    printMacAddr(etherHeader.ether_dhost);
+    macAddrPrint(etherHeader.ether_dhost);
 
     cout << "Src: ";
-    printMacAddr(etherHeader.ether_shost);
+    macAddrPrint(etherHeader.ether_shost);
 
     cout << "Type: "
-         << etherHeader.ether_type
+         << static_cast<int>(etherHeader.ether_type)
          << " (" << std::hex << setw(4) << setfill('0')
-         << etherHeader.ether_type << ") => " << std::dec
-         << giveEtherTypeString(etherHeader.ether_type) << endl;
+         << static_cast<int>(etherHeader.ether_type) << ") => " << std::dec
+         << etherTypeGiveString(etherHeader.ether_type) << endl;
 }
 
-int parseIpHeader(ip_header_t& ipHeader, char* buffer, int& pointer) {
+int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer) {
     int pointerStartValue = pointer;
 
     uint8_t version_IHL = toUint8(buffer, pointer);
@@ -180,7 +186,7 @@ int parseIpHeader(ip_header_t& ipHeader, char* buffer, int& pointer) {
     return pointer - pointerStartValue;
 }
 
-void printIpAddr(uint8_t* ipAddr) {
+void ipAddrPrint(uint8_t* ipAddr) {
     for(int i = 0; i < 4; i++){
         cout << static_cast<int>(ipAddr[i]);
 
@@ -191,7 +197,7 @@ void printIpAddr(uint8_t* ipAddr) {
     }
 }
 
-void printIpAddr(uint16_t* ipAddr) {
+void ipAddrPrint(uint16_t* ipAddr) {
     for(int i = 0; i < 8; i++){
         cout << std::hex << setw(2) << setfill('0') << static_cast<uint16_t>(ipAddr[i]);
 
@@ -202,7 +208,7 @@ void printIpAddr(uint16_t* ipAddr) {
     }
 }
 
-const char* giveIpNextHeaderProtocolString(ipNextHeaderProtocol nextHeaderProtocol) {
+const char* ipNextHeaderProtocolGiveString(ipNextHeaderProtocol nextHeaderProtocol) {
     switch(nextHeaderProtocol) {
         case ipNextHeaderProtocol::TCP:
             return IPPROT_TCP_STRING;
@@ -213,28 +219,28 @@ const char* giveIpNextHeaderProtocolString(ipNextHeaderProtocol nextHeaderProtoc
     }
 }
 
-void printIpHeader(ip_header_t& ipHeader) {
+void ipHeaderPrint(ip_header_t& ipHeader) {
     cout << "Version: " << ipHeader.version << endl;
 
     if (ipHeader.version == ipVersion::v4) {
         cout << "Header length: " << static_cast<int>(ipHeader.header_length) << endl;
         cout << "Total length: " << ipHeader.total_length << endl;
         cout << "Next header/protocol: "
-             << giveIpNextHeaderProtocolString(ipHeader.nextHeader_protocol) << endl;
+             << ipNextHeaderProtocolGiveString(ipHeader.nextHeader_protocol) << endl;
 
         cout << "Dst: ";
-        printIpAddr(ipHeader.v4_dst);
+        ipAddrPrint(ipHeader.v4_dst);
         cout << "Src: ";
-        printIpAddr(ipHeader.v4_src);
+        ipAddrPrint(ipHeader.v4_src);
     } else if (ipHeader.version == ipVersion::v6) {
         cout << "Header length: " << static_cast<int>(ipHeader.payload_length) << endl;
         cout << "Next header/protocol: "
-             << giveIpNextHeaderProtocolString(ipHeader.nextHeader_protocol) << endl;
+             << ipNextHeaderProtocolGiveString(ipHeader.nextHeader_protocol) << endl;
 
         cout << "Dst: ";
-        printIpAddr(ipHeader.v6_dst);
+        ipAddrPrint(ipHeader.v6_dst);
         cout << "Src: ";
-        printIpAddr(ipHeader.v6_src);
+        ipAddrPrint(ipHeader.v6_src);
     } else
         cerr << "Error: IP header - unknown version: " << ipHeader.version << endl;
 }

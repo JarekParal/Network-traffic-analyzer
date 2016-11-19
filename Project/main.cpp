@@ -32,7 +32,7 @@ int main() {
 
     cout << " ----- Load file to array buffer[]" << endl;
     pcapFile.seekg(0, pcapFile.end);
-    int sizeOfPcap = pcapFile.tellg();
+    long sizeOfPcap = pcapFile.tellg();
     pcapFile.seekg(0, pcapFile.beg);
 
     cout << "Size of pcap file: " << sizeOfPcap << endl;
@@ -63,34 +63,35 @@ int main() {
     cout << std::dec << num << endl;
 
     cout << " ----- Work with global header" << endl;
-    parsePcapGlobalHeader(globalHeader, buffer, pcapPointer);
-    printPcapGlobalHeader(globalHeader);
+    pcapGlobalHeaderParse(globalHeader, buffer, pcapPointer);
+    pcapGlobalHeaderPrint(globalHeader);
 
     cout << " ----- Work with packet header" << endl;
-    parsePcapPacketHeader(packetHeader, buffer, pcapPointer);
-    printPcapPacketHeader(packetHeader);
+    pcapPacketHeaderParse(packetHeader, buffer, pcapPointer);
+    pcapPacketHeaderPrint(packetHeader);
 
     cout << " ----- Parse ethernet header" << endl;
-    transferDataSizeByte += parseEthernetHeader(etherHeader, buffer, pcapPointer);
-    printEthernetHeader(etherHeader);
+    transferDataSizeByte += ethernetHeaderParse(etherHeader, buffer, pcapPointer);
+    ethernetHeaderPrint(etherHeader);
     transferDataPrint(transferDataSizeByte);
 
     cout << " ----- Parse IP header" << endl;
     switch (etherHeader.ether_type) {
-        case ETHERTYPE_IP:
-        case ETHERTYPE_IP6:
-            transferDataSizeByte += parseIpHeader(ipHeader, buffer, pcapPointer);
-            printIpHeader(ipHeader);
+        case etherTypeEnum::IP:
+        case etherTypeEnum::IP6:
+            transferDataSizeByte += ipHeaderParse(ipHeader, buffer, pcapPointer);
+            ipHeaderPrint(ipHeader);
             transferDataPrint(transferDataSizeByte);
             break;
 
-        case ETHERTYPE_ARP:
+        case etherTypeEnum::ARP:
 
             break;
 
         default:
             //802.3 length - https://en.wikipedia.org/wiki/Ethernet_frame#Ethernet_frame_types
-            transferDataSizeByte += etherHeader.ether_type;
+            transferDataSizeByte += static_cast<int>(etherHeader.ether_type);
+            transferDataPrint(transferDataSizeByte);
             break;
     }
 
