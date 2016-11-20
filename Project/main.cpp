@@ -17,11 +17,27 @@ int main() {
     int packetNumber = 0;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
+
+    //packetHeader.etherHeader = new ether_header_t;
+    //packetHeader.etherHeader->ipHeader = new ip_header_t;
+    //packetHeader.etherHeader->ipHeader->tcpUdpHeader = new tcp_udp_header_t;
+
     ether_header_t etherHeader;
     ip_header_t ipHeader;
     tcp_udp_header_t tcpUdpHeader;
 
+#define fullDebug
+
     ////cout << " ----- Debug setting << endl;
+#ifdef fullDebug
+    bool debugPcapGlobalHeader = true;
+    bool debugPcapPacketHeader = true;
+    bool debugEthernetHeader = true;
+    bool debugIpHeader = true;
+    bool debugTcpUdpHeader = true;
+    bool debugInfo = true;
+    bool debugPacket = true;
+#else
     bool debugPcapGlobalHeader = false;
     bool debugPcapPacketHeader = false;
     bool debugEthernetHeader = false;
@@ -29,6 +45,7 @@ int main() {
     bool debugTcpUdpHeader = false;
     bool debugInfo = false;
     bool debugPacket = true;
+#endif
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
@@ -80,8 +97,8 @@ int main() {
     }
 
     while(pcapPointer < sizeOfPcap) {
-        etherHeader.ether_type = etherTypeEnum::unk;
-        ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
+        packetHeader.etherHeader.ether_type = etherTypeEnum::unk;
+        packetHeader.etherHeader.ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
 
         pcapPacketHeaderParse(packetHeader, buffer, pcapPointer);
         if (debugPcapPacketHeader) {
@@ -97,29 +114,29 @@ int main() {
             cout << "-- Pcap pointer: " << decAndHexStr(pcapPointer) << endl;
         }
 
-        transferDataSizeByte += ethernetHeaderParse(etherHeader, buffer, pcapPointer);
+        transferDataSizeByte += ethernetHeaderParse(packetHeader, buffer, pcapPointer);
         if (debugEthernetHeader) {
             cout << " ----- Parse ethernet header" << endl;
-            ethernetHeaderPrint(etherHeader);
+            ethernetHeaderPrint(packetHeader.etherHeader);
             transferDataPrint(transferDataSizeByte);
         }
 
-        switch (etherHeader.ether_type) {
+        switch (packetHeader.etherHeader.ether_type) {
             case etherTypeEnum::IP:
             case etherTypeEnum::IP6:
-                transferDataSizeByte += ipHeaderParse(ipHeader, buffer, pcapPointer);
+                transferDataSizeByte += ipHeaderParse(packetHeader , buffer, pcapPointer);
                 if (debugIpHeader) {
                     cout << " ----- Parse IP header" << endl;
-                    ipHeaderPrint(ipHeader);
+                    ipHeaderPrint(packetHeader.etherHeader.ipHeader);
                     transferDataPrint(transferDataSizeByte);
                 }
 
                 transferDataSizeByte += tcpUdpHeaderParse
-                        (tcpUdpHeader, buffer, pcapPointer, ipHeader.nextHeader_protocol);
+                        (packetHeader, buffer, pcapPointer);
 
                 if (debugTcpUdpHeader) {
                     cout << " ----- Parse TCP/UDP header" << endl;
-                    tcpUdpPrint(tcpUdpHeader);
+                    tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
                     transferDataPrint(transferDataSizeByte);
                 }
                 break;
@@ -136,15 +153,15 @@ int main() {
                 break;
         }
 
+        if (debugPacket)
+            packetPrint(packetHeader, packetNumber, transferDataSizeByte);
+
         if(debugInfo) {
             cout << "-- pcapPointer: " << decAndHexStr(pcapPointer) << endl;
             cout << "-- pcapPointerStart: " << decAndHexStr(pcapPointerStart) << endl;
             cout << "-- transferDataSizeByte: " << decAndHexStr(transferDataSizeByte) << endl;
             cout << "-- pcapPointerStart + transferDataSizeByte: " << decAndHexStr(pcapPointerStart + transferDataSizeByte) << endl;
         }
-
-        if (debugPacket)
-            packetPrint(packetNumber, packetHeader, etherHeader, ipHeader, tcpUdpHeader, transferDataSizeByte);
 
         pcapPointer = pcapPointerStart + transferDataSizeByte;
         transferDataSizeByte = 0;

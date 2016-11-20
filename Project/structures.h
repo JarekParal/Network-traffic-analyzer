@@ -26,31 +26,52 @@
 #include <arpa/inet.h> /* IP address conversion stuff */
 #endif
 
-
 #include "convert.h"
 
-// ----- Pcap
-// pcap file description
-// Source for structure: pcap_glob_hdr_s, pcap_packet_hdr_s
-// https://wiki.wireshark.org/Development/LibpcapFileFormat
-typedef struct pcap_glob_hdr_s {
-    uint32_t magic_number;   /* magic number */
-    uint16_t version_major;  /* major version number */
-    uint16_t version_minor;  /* minor version number */
-    int32_t  thiszone;       /* GMT to local correction */
-    uint32_t sigfigs;        /* accuracy of timestamps */
-    uint32_t snaplen;        /* max length of captured packets, in octets */
-    uint32_t network;        /* data link type */
-    // suma = 6*32 bits = 192 bits = 24 bytes
-} pcap_glob_hdr_t; //pcap_hdr_t;
 
-typedef struct pcap_packet_hdr_s {
-    uint32_t ts_sec;         /* timestamp seconds */
-    uint32_t ts_usec;        /* timestamp microseconds */
-    uint32_t incl_len;       /* number of octets of packet saved in file */
-    uint32_t orig_len;       /* actual length of packet */
-    // suma = 32 * 4 bits = 128 bits = 16 bytes
-} pcap_packet_hdr_t; //pcaprec_hdr_t;
+// ----- IP - ipNextHeaderProtocol
+enum ipNextHeaderProtocol {
+    TCP = 0x06, /* Transmission Control Protocol */
+    UDP = 0x11, /* User Datagram Protocol */
+    unk = 0xFF  /* unknown - my internal type */
+};
+
+
+// ----- TCP/UDP
+typedef struct tcp_udp_header_s {
+    uint16_t dst_port;
+    uint16_t src_port;
+    uint8_t data_offset;
+    uint16_t length;
+    ipNextHeaderProtocol tcp_udp;
+} tcp_udp_header_t;
+
+
+// ----- IP header
+enum ipVersion {
+    v4 = 4,
+    v6 = 6
+};
+
+const char IPPROT_TCP_STRING[] = "TCP";
+const char IPPROT_UDP_STRING[] = "UDP";
+const char IPPROT_UNKNOWN[] = "Unknown";
+
+typedef struct ip_header_s {
+    ipVersion version; // = uint8_t
+    uint8_t header_length;
+    uint16_t total_length;
+    uint16_t payload_length;
+    uint16_t nextHeader_length;
+
+    ipNextHeaderProtocol nextHeader_protocol; // = uint8_t
+    uint8_t	v4_dst[4];
+    uint8_t	v4_src[4];
+    uint16_t v6_dst[8];
+    uint16_t v6_src[8];
+
+    tcp_udp_header_t tcpUdpHeader;
+} ip_header_t;
 
 
 // ----- Ethernet
@@ -78,46 +99,36 @@ typedef struct ether_header_s {
     uint8_t	ether_shost[6];
     etherTypeEnum ether_type; // = uint16_t
     bool vlan802_1Q;
+
+    ip_header_t ipHeader;
 } ether_header_t;
 
 
-// ----- IP header
-enum ipVersion {
-    v4 = 4,
-    v6 = 6
-};
+// ----- Pcap
+// pcap file description
+// Source for structure: pcap_glob_hdr_s, pcap_packet_hdr_s
+// https://wiki.wireshark.org/Development/LibpcapFileFormat
+typedef struct pcap_glob_hdr_s {
+    uint32_t magic_number;   /* magic number */
+    uint16_t version_major;  /* major version number */
+    uint16_t version_minor;  /* minor version number */
+    int32_t  thiszone;       /* GMT to local correction */
+    uint32_t sigfigs;        /* accuracy of timestamps */
+    uint32_t snaplen;        /* max length of captured packets, in octets */
+    uint32_t network;        /* data link type */
+    // suma = 6*32 bits = 192 bits = 24 bytes
+} pcap_glob_hdr_t; //pcap_hdr_t;
 
-enum ipNextHeaderProtocol {
-    TCP = 0x06, /* Transmission Control Protocol */
-    UDP = 0x11, /* User Datagram Protocol */
-    unk = 0xFF  /* unknown - my internal type */
-};
+typedef struct pcap_packet_hdr_s {
+    uint32_t ts_sec;         /* timestamp seconds */
+    uint32_t ts_usec;        /* timestamp microseconds */
+    uint32_t incl_len;       /* number of octets of packet saved in file */
+    uint32_t orig_len;       /* actual length of packet */
+    // suma = 32 * 4 bits = 128 bits = 16 bytes
 
-const char IPPROT_TCP_STRING[] = "TCP";
-const char IPPROT_UDP_STRING[] = "UDP";
-const char IPPROT_UNKNOWN[] = "Unknown";
+    ether_header_t etherHeader;
+} pcap_packet_hdr_t; //pcaprec_hdr_t;
 
-typedef struct ip_header_s {
-    ipVersion version; // = uint8_t
-    uint8_t header_length;
-    uint16_t total_length;
-    uint16_t payload_length;
-
-    ipNextHeaderProtocol nextHeader_protocol; // = uint8_t
-    uint8_t	v4_dst[4];
-    uint8_t	v4_src[4];
-    uint16_t v6_dst[8];
-    uint16_t v6_src[8];
-} ip_header_t;
-
-// ----- TCP/UDP
-typedef struct tcp_udp_header_s {
-    uint16_t dst_port;
-    uint16_t src_port;
-    uint8_t data_offset;
-    uint16_t length;
-    ipNextHeaderProtocol tcp_udp;
-} tcp_udp_header_t;
 
 void printDecAndHex(int num);
 std::string decAndHexStr(int num);
@@ -133,18 +144,18 @@ const char* etherTypeGiveString(etherTypeEnum etherType);
 void etherTypePrint(etherTypeEnum etherType);
 bool etherTypeIsDefine(etherTypeEnum etherType);
 
-int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer);
+int ethernetHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer);
 void ethernetHeaderPrint(ether_header_t& etherHeader);
 
-int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer);
+int ipHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer);
 void ipHeaderPrint(ip_header_t& ipHeader);
 void ipAddrPrint(uint8_t* ipAddr, bool printLine = true, bool numAlignment = false);
 void ipAddrPrint(uint16_t* ipAddr, bool printLine = true);
 const char* ipNextHeaderProtocolGiveString(ipNextHeaderProtocol nextHeaderProtocol);
 
-int tcpUdpHeaderParse(tcp_udp_header_t& tcpUdpHeader, char* buffer, int& pointer, ipNextHeaderProtocol tcpUdpProtocol);
+int tcpUdpHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer);
 void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader);
 
-void packetPrint(int packetNumber, pcap_packet_hdr_t packetHeader, ether_header_t etherHeader, ip_header_t ipHeader, tcp_udp_header_t tcpUdpHeader, int transferDataSizeByte);
+void packetPrint(pcap_packet_hdr_t& packetHeader, int packetNumber, int transferDataSizeByte);
 
 #endif //ISA_PROJECT_STRUCTURES_H

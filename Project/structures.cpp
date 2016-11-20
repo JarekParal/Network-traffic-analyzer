@@ -44,13 +44,13 @@ void pcapGlobalHeaderParse(pcap_glob_hdr_t& pcapGlobalHeader, char* buffer, int&
 }
 
 void pcapGlobalHeaderPrint(pcap_glob_hdr_t& pcapGlobalHeader) {
-    cout << decAndHexStr(pcapGlobalHeader.magic_number) << endl;
-    cout << decAndHexStr(pcapGlobalHeader.version_major) << endl;
-    cout << decAndHexStr(pcapGlobalHeader.version_minor) << endl;
-    cout << decAndHexStr(pcapGlobalHeader.thiszone) << endl;
-    cout << decAndHexStr(pcapGlobalHeader.sigfigs)  << endl;
-    cout << decAndHexStr(pcapGlobalHeader.snaplen) << endl;
-    cout << decAndHexStr(pcapGlobalHeader.network) << endl;
+    cout << "Magic number: " << decAndHexStr(pcapGlobalHeader.magic_number) << endl;
+    cout << "Major version: " << decAndHexStr(pcapGlobalHeader.version_major) << endl;
+    cout << "Minor version: " << decAndHexStr(pcapGlobalHeader.version_minor) << endl;
+    cout << "GMT to local correction: " << decAndHexStr(pcapGlobalHeader.thiszone) << endl;
+    cout << "Accuracy of timestamps: " << decAndHexStr(pcapGlobalHeader.sigfigs)  << endl;
+    cout << "Max length of captured packets, in octets: " << decAndHexStr(pcapGlobalHeader.snaplen) << endl;
+    cout << "Data link type: " << decAndHexStr(pcapGlobalHeader.network) << endl;
 }
 
 void pcapPacketHeaderParse(pcap_packet_hdr_t& pcapPacketHeader, char* buffer, int& pointer) {
@@ -126,7 +126,10 @@ bool etherTypeIsDefine(etherTypeEnum etherType) {
     return static_cast<int>(etherType) >= 0x0600;
 }
 
-int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer) {
+int ethernetHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
+    ether_header_t& etherHeader = packetHeader.etherHeader;
+//}
+//int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer) {
     int pointerStartValue = pointer;
 
     memcpy(etherHeader.ether_dhost, buffer + pointer, 6);
@@ -164,16 +167,21 @@ void ethernetHeaderPrint(ether_header_t& etherHeader) {
          << etherTypeGiveString(etherHeader.ether_type) << endl;
 }
 
-int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer) {
+const int ipHeader_header_length_minValueByte = 20; // IHL - Internet Header Length
+// https://en.wikipedia.org/wiki/IPv4#Packet_structure#IHL
+
+int ipHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
+    ip_header_t & ipHeader = packetHeader.etherHeader.ipHeader;
     int pointerStartValue = pointer;
 
     uint8_t version_IHL = toUint8(buffer, pointer);
     ipHeader.version = static_cast<ipVersion>((version_IHL & 0xF0) >> 4);
-    ipHeader.header_length = static_cast<uint8_t>((version_IHL & 0x0F));
+    ipHeader.header_length = static_cast<uint8_t>((version_IHL & 0x0F)*4); // *4 => convert to byte
 
     if(ipHeader.version == ipVersion::v4) {
         pointer += 1; // jump to total length
         ipHeader.total_length = toUint16(buffer, pointer);
+        ipHeader.nextHeader_length = ipHeader.total_length - ipHeader.header_length;
         pointer += 5;
         ipHeader.nextHeader_protocol
                 = static_cast<ipNextHeaderProtocol>(toUint8(buffer, pointer));
@@ -184,12 +192,13 @@ int ipHeaderParse(ip_header_t& ipHeader, char* buffer, int& pointer) {
         memcpy(ipHeader.v4_dst, buffer + pointer, 4);
         pointer += 4;
 
-        if(ipHeader.header_length > 5)
-            pointer += ipHeader.header_length - 5;
+        if(ipHeader.header_length > ipHeader_header_length_minValueByte)
+            pointer += ipHeader.header_length - ipHeader_header_length_minValueByte;
     }
     else if(ipHeader.version == ipVersion::v6) {
         pointer += 3; // jump to payload length
         ipHeader.payload_length = toUint16(buffer, pointer);
+        ipHeader.nextHeader_length = ipHeader.payload_length;
         ipHeader.nextHeader_protocol
                 = static_cast<ipNextHeaderProtocol>(toUint8(buffer, pointer));
         pointer += 1;
@@ -250,8 +259,9 @@ void ipHeaderPrint(ip_header_t& ipHeader) {
     cout << "Version: " << ipHeader.version << endl;
 
     if (ipHeader.version == ipVersion::v4) {
-        cout << "Header length: " << static_cast<int>(ipHeader.header_length) << endl;
-        cout << "Total length: " << ipHeader.total_length << endl;
+        cout << "Header length (byte): " << static_cast<int>(ipHeader.header_length) << endl;
+        cout << "Total length (byte): " << ipHeader.total_length << endl;
+        cout << "Next header length: " << decAndHexStr(ipHeader.nextHeader_length) << endl;
         cout << "Next header/protocol: "
              << ipNextHeaderProtocolGiveString(ipHeader.nextHeader_protocol) << endl;
 
@@ -272,26 +282,28 @@ void ipHeaderPrint(ip_header_t& ipHeader) {
         cerr << "Error: IP header - unknown version: " << ipHeader.version << endl;
 }
 
-int tcpUdpHeaderParse(tcp_udp_header_t& tcpUdpHeader, char* buffer, int& pointer, ipNextHeaderProtocol tcpUdpProtocol) {
+int tcpUdpHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
+    tcp_udp_header_t & tcpUdpHeader = packetHeader.etherHeader.ipHeader.tcpUdpHeader;
+
     int pointerStartValue = pointer;
 
     tcpUdpHeader.src_port = toUint16(buffer,pointer);
     tcpUdpHeader.dst_port = toUint16(buffer,pointer);
 
-    if(tcpUdpProtocol == ipNextHeaderProtocol::TCP) {
+    if(packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::TCP) {
         pointer += 8; // jump to data offser
         tcpUdpHeader.data_offset = static_cast<uint8_t>(((toUint8(buffer,pointer) & 0xF0) >> 4) * 4);
         //https://en.wikipedia.org/wiki/Transmission_Control_Protocol#TCP_segment_structure
         tcpUdpHeader.tcp_udp = ipNextHeaderProtocol::TCP;
-        return tcpUdpHeader.data_offset;
-    } else if (tcpUdpProtocol == ipNextHeaderProtocol::UDP) {
+        //return tcpUdpHeader.data_offset;
+    } else if (packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::UDP) {
         tcpUdpHeader.length = toUint16(buffer,pointer);
         tcpUdpHeader.tcp_udp = ipNextHeaderProtocol::UDP;
     }
     else
         return 0; // error
 
-    return pointer - pointerStartValue;
+    return packetHeader.etherHeader.ipHeader.nextHeader_length; //pointer - pointerStartValue;
 }
 
 void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader) {
@@ -306,7 +318,11 @@ void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader) {
         cerr << "Error: TCP/UDP header - unknown version: " << tcpUdpHeader.tcp_udp << endl;
 }
 
-void packetPrint(int packetNumber, pcap_packet_hdr_t packetHeader, ether_header_t etherHeader, ip_header_t ipHeader, tcp_udp_header_t tcpUdpHeader, int transferDataSizeByte) {
+void packetPrint(pcap_packet_hdr_t& packetHeader, int packetNumber, int transferDataSizeByte) {
+    ether_header_t & etherHeader = packetHeader.etherHeader;
+    ip_header_t & ipHeader = packetHeader.etherHeader.ipHeader;
+    tcp_udp_header_t & tcpUdpHeader = packetHeader.etherHeader.ipHeader.tcpUdpHeader;
+
     cout << setw(4) << setfill(' ') <<  packetNumber << ": ";
     macAddrPrint(etherHeader.ether_shost, false);
     cout << " -> ";
