@@ -17,14 +17,14 @@ int main() {
 
     vector<filteredPacket_t> filteredPacketVec;
     filteredPacket_t filteredPacket;
-    filteredPacketInit(filteredPacket);
+    //filteredPacketInit(filteredPacket);
 
     ////cout << " ----- Init variable << endl;
     int transferDataSizeByte = 0;
     int packetNumber = 0;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
-    packetHeaderInit(packetHeader);
+    //packetHeaderInit(packetHeader);
 
     ether_header_t etherHeader;
     etherHeaderInit(etherHeader);
@@ -54,6 +54,8 @@ int main() {
     bool debugInfo = false;
     bool debugPacket = true;
 #endif
+
+    bool debugFilteredPacketPrint = true;
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
@@ -108,6 +110,7 @@ int main() {
         //packetHeader.etherHeader.ether_type = etherTypeEnum::unk;
         //packetHeader.etherHeader.ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
         packetHeaderInit(packetHeader);
+        filteredPacketInit(filteredPacket);
 
         pcapPacketHeaderParse(packetHeader, buffer, pcapPointer);
         if (debugPcapPacketHeader) {
@@ -117,6 +120,7 @@ int main() {
 
         pcapPointerStart = pcapPointer;
         packetNumber++;
+        filteredPacket.packetNumber = packetNumber;
 
         if(debugInfo) {
             cout << "-- Packet number: " << decAndHexStr(packetNumber) << endl;
@@ -129,6 +133,9 @@ int main() {
             ethernetHeaderPrint(packetHeader.etherHeader);
             transferDataPrint(transferDataSizeByte);
         }
+        macHeaderCopy(filteredPacket, packetHeader.etherHeader);
+        if(debugFilteredPacketPrint)
+            filteredPacketPrint(filteredPacket);
 
         switch (packetHeader.etherHeader.ether_type) {
             case etherTypeEnum::IP:
@@ -139,6 +146,9 @@ int main() {
                     ipHeaderPrint(packetHeader.etherHeader.ipHeader);
                     transferDataPrint(transferDataSizeByte);
                 }
+                ipHeaderCopy(filteredPacket, packetHeader.etherHeader.ipHeader);
+                if(debugFilteredPacketPrint)
+                    filteredPacketPrint(filteredPacket);
 
                 if(packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::TCP ||
                     packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::UDP) {
@@ -149,6 +159,9 @@ int main() {
                         tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
                         transferDataPrint(transferDataSizeByte);
                     }
+                    tcpUdpHeaderCopy(filteredPacket, packetHeader.etherHeader.ipHeader.tcpUdpHeader);
+                    if(debugFilteredPacketPrint)
+                        filteredPacketPrint(filteredPacket);
                 } else {
                     transferDataSizeByte += packetHeader.etherHeader.ipHeader.nextHeader_length;
                 }

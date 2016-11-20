@@ -257,6 +257,11 @@ void ipAddrPrint(uint8_t* ipAddr, bool printLine, bool numAlignment) {
     }
 }
 
+//void ipv6AddrPrint(ipv6_addr_t & ipv6Addr, bool printLine) {
+//{
+//    ipAddrPrint(ipv6Addr.addr_bytes, printLine);
+//}
+
 void ipAddrPrint(uint16_t* ipAddr, bool printLine) {
     for(int i = 0; i < 8; i++){
         cout << std::hex << setw(2) << setfill('0') << static_cast<uint16_t>(ipAddr[i]);

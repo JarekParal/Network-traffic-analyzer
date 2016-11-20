@@ -142,14 +142,95 @@ void portEqualPrint(uint16_t port1, uint16_t port2) {
 }
 
 void filteredPacketInit(filteredPacket_t & filteredPacket) {
+    filteredPacket.packetNumber = 0;
+
     macAddrInit(filteredPacket.mac_dst.addr_bytes);
     macAddrInit(filteredPacket.mac_src.addr_bytes);
+    filteredPacket.mac_set = false;
 
     ipv4AddrInit(filteredPacket.ipv4_dst.addr_bytes);
     ipv4AddrInit(filteredPacket.ipv4_src.addr_bytes);
+    filteredPacket.ipv4_set = false;
     ipv6AddrInit(filteredPacket.ipv6_dst.addr_bytes);
     ipv6AddrInit(filteredPacket.ipv6_src.addr_bytes);
+    filteredPacket.ipv6_set = false;
+
+    filteredPacket.next_prot = ipNextHeaderProtocol::unk;
 
     filteredPacket.port_dst = 0;
     filteredPacket.port_src = 0;
+    filteredPacket.port_set = false;
+}
+
+void filteredPacketPrint(filteredPacket_t & filteredPacket)
+{
+    cout << setw(4) << setfill(' ') <<  filteredPacket.packetNumber << ": ";
+    if(filteredPacket.mac_set) {
+        macAddrPrint(filteredPacket.mac_src.addr_bytes, false);
+        cout << " -> ";
+        macAddrPrint(filteredPacket.mac_dst.addr_bytes, false);
+        cout << "  ";
+    }
+
+    if(filteredPacket.ipv4_set) {
+        ipAddrPrint(filteredPacket.ipv4_src.addr_bytes, false, true);
+        cout << "  -> ";
+        ipAddrPrint(filteredPacket.ipv4_dst.addr_bytes, false, true);
+    }
+    else if(filteredPacket.ipv6_set) {
+        ipAddrPrint(filteredPacket.ipv6_src.addr_bytes, false);
+        cout << "  -> ";
+        ipAddrPrint(filteredPacket.ipv6_dst.addr_bytes, false);
+    }
+
+    if(filteredPacket.ipv4_set || filteredPacket.ipv6_set) {
+        cout << "   " << ipNextHeaderProtocolGiveString(filteredPacket.next_prot);
+        cout << "   ";
+    }
+
+    if(filteredPacket.port_set)
+        cout << filteredPacket.port_src << " -> " << filteredPacket.port_src;
+    cout << endl;
+}
+
+void macAddrCopy(uint8_t* filteredPacketMac, uint8_t* packetHeaderMac) {
+    memcpy(filteredPacketMac, packetHeaderMac, 6);
+}
+
+void macHeaderCopy(filteredPacket_t & filteredPacket, ether_header_t & etherHeader) {
+    macAddrCopy(filteredPacket.mac_dst.addr_bytes, etherHeader.ether_dhost);
+    macAddrCopy(filteredPacket.mac_src.addr_bytes, etherHeader.ether_shost);
+    filteredPacket.mac_set = true;
+}
+
+void ipAddrCopy(uint8_t* filteredPacketIpv4, uint8_t* packetHeaderIpv4) {
+    memcpy(filteredPacketIpv4, packetHeaderIpv4, 4);
+}
+
+void ipAddrCopy(uint16_t* filteredPacketIpv6, uint16_t* packetHeaderIpv6) {
+    for(int i = 0; i < 8; ++i)
+        filteredPacketIpv6[i] = packetHeaderIpv6[i];
+}
+
+void ipHeaderCopy(filteredPacket_t & filteredPacket, ip_header_t & ipHeader) {
+    if(ipHeader.version == ipVersion::v4) {
+        ipAddrCopy(filteredPacket.ipv4_dst.addr_bytes, ipHeader.v4_dst);
+        ipAddrCopy(filteredPacket.ipv4_src.addr_bytes, ipHeader.v4_src);
+        filteredPacket.ipv4_set = true;
+    }else if(ipHeader.version == ipVersion::v6) {
+        ipAddrCopy(filteredPacket.ipv6_dst.addr_bytes, ipHeader.v6_dst);
+        ipAddrCopy(filteredPacket.ipv6_src.addr_bytes, ipHeader.v6_src);
+        filteredPacket.ipv6_set = true;
+    }
+    filteredPacket.next_prot = ipHeader.nextHeader_protocol;
+}
+
+void portCopy(uint16_t & filteredPacketPort, uint16_t & packetHeaderPort) {
+    filteredPacketPort = packetHeaderPort;
+}
+
+void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, tcp_udp_header_t & tcpUdpHeader) {
+    portCopy(filteredPacket.port_dst, tcpUdpHeader.dst_port);
+    portCopy(filteredPacket.port_src, tcpUdpHeader.src_port);
+    filteredPacket.port_set = true;
 }
