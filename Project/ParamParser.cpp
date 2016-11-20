@@ -118,9 +118,6 @@ bool dec2word(const string& dec, uint16_t& res)
 }
 
 bool parseParameters(int argc, const char* argv[], std::string& inputFile, filter_t& filters, std::string* const error, warnings_t* const warnings) {
-    for(auto kv: FILTER_TYPES)
-        cout << '"' << kv.first << '"' << endl;
-    cout << "Args:" << endl;
     inputFile.clear();
     bool filterTypeEnumPassed = false;
     bool filterValuePassed = false;
@@ -262,6 +259,6 @@ bool parseParameters(int argc, const char* argv[], std::string& inputFile, filte
         ERROR("No filter value specified.", 0);
     if(!(filters.applySrc || filters.applyDst))
         ERROR("Non of source or destination applied.", 0);
-    cout << "Args parsing done."<<endl;
+    //cout << "Args parsing done."<<endl;
     return true;
 };
