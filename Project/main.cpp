@@ -15,7 +15,7 @@ void transferDataPrint(int transferData) {
 int main() {
     testFilter();
 
-    //return 0;
+    return 0;
 
     ////cout << " ----- Init variable << endl;
     int transferDataSizeByte = 0;
