@@ -17,8 +17,14 @@
 // Source: http://stackoverflow.com/a/4433027
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN 1
-#include <winsock2.h>
+//#define _WIN32_WINNT _WIN32_WINNT_WIN10 // Windows 10.0
 #include <windows.h>
+#include <winsock2.h>
+#include <Ws2tcpip.h>
+#include <iphlpapi.h>
+#include <stdio.h>
+#pragma comment(lib, "ws2_32.lib")
+//WSADATA wsaData;
 #else
 // unix includes here
 #include <sys/socket.h> /* socket specific definitions */

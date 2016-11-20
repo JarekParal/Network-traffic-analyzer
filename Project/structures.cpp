@@ -1,7 +1,6 @@
 //
 // Created by JarekParal (xparal02@stud.fit.vutbr.cz) on 13.11.2016.
 //
-
 #include "structures.h"
 
 using std::cout;
@@ -10,6 +9,27 @@ using std::endl;
 using std::setw;
 using std::setfill;
 using std::string;
+
+
+int inet_pton_patch() {
+#ifdef _WIN32
+    //InetPton()
+    //https://msdn.microsoft.com/en-us/library/cc805844(v=vs.85).aspx
+    //http://stackoverflow.com/questions/15660203/inet-pton-identifier-not-found
+    //https://memset.wordpress.com/2010/10/09/inet_ntop-for-win32/
+    //https://www.ipv6.cz/Inetpton()
+    //http://stackoverflow.com/questions/17379741/issues-when-using-wsaaddresstostring
+#else
+    if (inet_pton(AF_INET6, ip6str, &result) == 1) // success!
+    {
+        //successfully parsed string into "result"
+    }
+    else
+    {
+        //failed, perhaps not a valid representation of IPv6?
+    }
+#endif
+}
 
 // Source stdPatch: http://stackoverflow.com/a/20861692
 namespace stdPatch
