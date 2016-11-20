@@ -167,7 +167,7 @@ const char* filterTypeGiveString(filterTypeEnum & filterType) {
 }
 
 
-void filterPrint(filter_t filter) {
+void filterPrint(filter_t& filter) {
     if(filterTypeCompare(filterTypeEnum::mac, filter.type)) {
         cout << "Mac addr:" << endl;
         for(mac_addr_t macAddr : filter.mac)
@@ -177,6 +177,11 @@ void filterPrint(filter_t filter) {
         cout << "IPv4 addr:" << endl;
         for(ipv4_addr_t ipv4Addr : filter.ipv4)
             ipAddrPrint(ipv4Addr.addr_bytes);
+    }
+    if(filterTypeCompare(filterTypeEnum::tcp, filter.type)) {
+        cout << "TCP port:" << endl;
+        for(uint16_t port : filter.port)
+            cout << port << endl;
     }
     cout << "Src addr: " << printTrueOrFalse(filter.applySrc) << endl;
     cout << "Dst addr: " << printTrueOrFalse(filter.applyDst) << endl;

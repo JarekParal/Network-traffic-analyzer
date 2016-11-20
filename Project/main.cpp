@@ -5,6 +5,7 @@
 
 #include "packet.h"
 #include "filter.h"
+#include "ParamParser.h"
 
 using namespace std;
 
@@ -12,11 +13,28 @@ void transferDataPrint(int transferData) {
     cout << "\t TD: " << transferData << " (" << transferData*8 << ")" << endl;
 }
 
-int main() {
+int main(int argc, const char* argv[]) {
     //testFilter();
+    string inputFile;
+    filter_t filter;
+    string inputArgError;
+    warnings_t warnings;
+    if(!parseParameters(argc, argv, inputFile, filter, &inputArgError, &warnings))
+    {
+        for(auto w: warnings)
+            cout << "Argument parser warning: " << w << endl;
+        cout << "Input arguments parsing failed:\n\t" << inputArgError << endl;
+        return -1;
+    }
+    for(auto w: warnings)
+        cout << "Argument parser warning: " << w << endl;
+
+    filterPrint(filter);
+
+    return 0;
 
     cout << " ----- Init filter" << endl;
-    filter_t filter;
+    //filter_t filter;
     //filterSimpleMacInit(filter);
     //filterSimpleIpv4InitSD(filter);
     //filterSimpleIpv4InitD(filter);

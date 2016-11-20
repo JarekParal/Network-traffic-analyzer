@@ -83,7 +83,7 @@ void filterSimpleMacInit(filter_t & filter);
 
 const char* filterTypeGiveString(filterTypeEnum & filterType);
 
-void filterPrint(filter_t filter);
+void filterPrint(filter_t& filter);
 
 void filterInit(filter_t & filter);
 
