@@ -29,11 +29,8 @@ int main(int argc, const char* argv[]) {
     for(auto w: warnings)
         cout << "Argument parser warning: " << w << endl;
 
-    filterPrint(filter);
 
-    return 0;
-
-    cout << " ----- Init filter" << endl;
+    /*cout << " ----- Init filter" << endl;
     //filter_t filter;
     //filterSimpleMacInit(filter);
     //filterSimpleIpv4InitSD(filter);
@@ -41,7 +38,7 @@ int main(int argc, const char* argv[]) {
     //filterSimpleTcpInitS(filter);
     filterSimpleTcpInitSD(filter);
     //filterSimpleUdpInitS(filter);
-    filterPrint(filter);
+    filterPrint(filter);*/
 
     vector<filteredPacket_t> filteredPacketVec;
     filteredPacket_t filteredPacket;
@@ -88,7 +85,7 @@ int main(int argc, const char* argv[]) {
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
-    pcapFile.open("../data/isa.pcap",  ios::binary);
+    pcapFile.open(inputFile.c_str(),  ios::binary);
 
     if(!pcapFile.is_open()) {
         cerr << "Pcap file couldn't open!" << endl;
