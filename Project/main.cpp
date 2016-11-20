@@ -135,8 +135,6 @@ int main() {
                     packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::UDP) {
                     transferDataSizeByte += tcpUdpHeaderParse(packetHeader, buffer, pcapPointer);
 
-
-
                     if (debugTcpUdpHeader) {
                         cout << " ----- Parse TCP/UDP header" << endl;
                         tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
