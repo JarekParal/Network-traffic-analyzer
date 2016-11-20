@@ -55,7 +55,7 @@ enum ipVersion {
 
 const char IPPROT_TCP_STRING[] = "TCP";
 const char IPPROT_UDP_STRING[] = "UDP";
-const char IPPROT_UNKNOWN[] = "Unknown";
+const char IPPROT_UNKNOWN[] = "unk";
 
 typedef struct ip_header_s {
     ipVersion version; // = uint8_t
@@ -70,6 +70,7 @@ typedef struct ip_header_s {
     uint16_t v6_dst[8];
     uint16_t v6_src[8];
 
+    int size;
     tcp_udp_header_t tcpUdpHeader;
 } ip_header_t;
 
@@ -88,7 +89,7 @@ enum class etherTypeEnum {
 const char ETHERTYPE_IP_STRING[] = "IPv4";
 const char ETHERTYPE_IP6_STRING[] = "IPv6";
 const char ETHERTYPE_ARP_STRING[] = "ARP";
-const char ETHERTYPE_UNKNOWN_STRING[] = "Unknown";
+const char ETHERTYPE_UNKNOWN_STRING[] = "unk";
 
 // Ethernet struct
 // Source (<netinet/in.h>)
@@ -100,6 +101,7 @@ typedef struct ether_header_s {
     etherTypeEnum ether_type; // = uint16_t
     bool vlan802_1Q;
 
+    uint16_t size;
     ip_header_t ipHeader;
 } ether_header_t;
 

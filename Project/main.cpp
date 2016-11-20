@@ -26,7 +26,7 @@ int main() {
     ip_header_t ipHeader;
     tcp_udp_header_t tcpUdpHeader;
 
-#define fullDebug
+//#define fullDebug
 
     ////cout << " ----- Debug setting << endl;
 #ifdef fullDebug
@@ -131,24 +131,30 @@ int main() {
                     transferDataPrint(transferDataSizeByte);
                 }
 
-                transferDataSizeByte += tcpUdpHeaderParse
-                        (packetHeader, buffer, pcapPointer);
+                if(packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::TCP ||
+                    packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::UDP) {
+                    transferDataSizeByte += tcpUdpHeaderParse(packetHeader, buffer, pcapPointer);
 
-                if (debugTcpUdpHeader) {
-                    cout << " ----- Parse TCP/UDP header" << endl;
-                    tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
-                    transferDataPrint(transferDataSizeByte);
+
+
+                    if (debugTcpUdpHeader) {
+                        cout << " ----- Parse TCP/UDP header" << endl;
+                        tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
+                        transferDataPrint(transferDataSizeByte);
+                    }
+                } else {
+                    transferDataSizeByte += packetHeader.etherHeader.ipHeader.nextHeader_length;
                 }
                 break;
 
             case etherTypeEnum::ARP:
-
+                transferDataSizeByte = packetHeader.orig_len;
                 break;
 
             default:
                 //802.3 length - https://en.wikipedia.org/wiki/Ethernet_frame#
-                transferDataSizeByte += static_cast<int>(etherHeader.ether_type);
-                etherHeader.ether_type = etherTypeEnum::unk;
+                transferDataSizeByte += static_cast<int>(packetHeader.etherHeader.ether_type);
+                packetHeader.etherHeader.ether_type = etherTypeEnum::unk;
                 transferDataPrint(transferDataSizeByte);
                 break;
         }

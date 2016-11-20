@@ -128,8 +128,7 @@ bool etherTypeIsDefine(etherTypeEnum etherType) {
 
 int ethernetHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
     ether_header_t& etherHeader = packetHeader.etherHeader;
-//}
-//int ethernetHeaderParse(ether_header_t& etherHeader, char* buffer, int& pointer) {
+
     int pointerStartValue = pointer;
 
     memcpy(etherHeader.ether_dhost, buffer + pointer, 6);
@@ -146,7 +145,8 @@ int ethernetHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& poin
         etherHeader.vlan802_1Q = false;
     }
 
-    return pointer - pointerStartValue;
+    etherHeader.size = pointer - pointerStartValue;
+    return etherHeader.size;
 
 //    // TODO: Doesn't work right - check why
 //    memcpy(etherHeader.ether_type, buffer + pointer, 2);
@@ -181,7 +181,19 @@ int ipHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
     if(ipHeader.version == ipVersion::v4) {
         pointer += 1; // jump to total length
         ipHeader.total_length = toUint16(buffer, pointer);
-        ipHeader.nextHeader_length = ipHeader.total_length - ipHeader.header_length;
+
+        if((packetHeader.orig_len - packetHeader.etherHeader.size) < ipHeader.total_length) {
+//            cerr << "IP packet wrong: ipHeader.total_length > packetHeader.orig_len - packetHeader.etherHeader.size" << endl;
+//            cerr << "ipHeader.total_length: " << ipHeader.total_length << endl;
+//            cerr << "packetHeader.orig_len: " << packetHeader.orig_len << endl;
+//            cerr << "packetHeader.etherHeader.size: " << packetHeader.etherHeader.size << endl;
+//            cerr << "packetHeader.orig_len - packetHeader.etherHeader.size: " << packetHeader.orig_len - packetHeader.etherHeader.size << endl;
+//            return 0;
+            ipHeader.nextHeader_length = (packetHeader.orig_len - packetHeader.etherHeader.size) - ipHeader.header_length;
+        }
+        else
+            ipHeader.nextHeader_length = ipHeader.total_length - ipHeader.header_length;
+
         pointer += 5;
         ipHeader.nextHeader_protocol
                 = static_cast<ipNextHeaderProtocol>(toUint8(buffer, pointer));
@@ -211,7 +223,8 @@ int ipHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
     else
         return 0; // error
 
-    return pointer - pointerStartValue;
+    ipHeader.size = pointer - pointerStartValue;
+    return ipHeader.size;
 }
 
 void ipAddrPrint(uint8_t* ipAddr, bool printLine, bool numAlignment) {
@@ -303,7 +316,12 @@ int tcpUdpHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointe
     else
         return 0; // error
 
-    return packetHeader.etherHeader.ipHeader.nextHeader_length; //pointer - pointerStartValue;
+    //TODO: ethernet padding // https://www.facebook.com/groups/fitbit2014/permalink/933249876779199/?comment_id=933253073445546&reply_comment_id=933346823436171&comment_tracking=%7B%22tn%22%3A%22R%22%7D
+    if((packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.size + packetHeader.etherHeader.ipHeader.size)
+       < packetHeader.orig_len)
+        return packetHeader.orig_len - packetHeader.etherHeader.size - packetHeader.etherHeader.ipHeader.size;
+    else
+        return packetHeader.etherHeader.ipHeader.nextHeader_length; //pointer - pointerStartValue;
 }
 
 void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader) {
@@ -342,7 +360,7 @@ void packetPrint(pcap_packet_hdr_t& packetHeader, int packetNumber, int transfer
     cout << "   " << ipNextHeaderProtocolGiveString(ipHeader.nextHeader_protocol);
     cout << "   ";
 
-    cout << transferDataSizeByte;
+    cout << setw(4) << setfill(' ') << transferDataSizeByte;
     cout << "   ";
 
     cout << tcpUdpHeader.src_port << " -> " << tcpUdpHeader.dst_port;
