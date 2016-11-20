@@ -37,6 +37,10 @@ typedef struct filter_s{
 
 void testFilter();
 
+template < typename PacketInput, typename FilterInputVec >
+bool vectorCompare(PacketInput * packetInput, vector<FilterInputVec>& filterInputVec);
+bool macsAddrsCompare(uint8_t * packetMac, vector<mac_addr_t>& macAddrVec);
+
 bool macAddrEqual(uint8_t * mac_addr1, uint8_t * mac_addr2);
 void macAddrEqualPrint(uint8_t * mac_addr1, uint8_t * mac_addr2);
 
