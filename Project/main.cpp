@@ -30,15 +30,15 @@ int main(int argc, const char* argv[]) {
         cout << "Argument parser warning: " << w << endl;
 
 
-    /*cout << " ----- Init filter" << endl;
+    //cout << " ----- Init filter" << endl;
     //filter_t filter;
     //filterSimpleMacInit(filter);
     //filterSimpleIpv4InitSD(filter);
     //filterSimpleIpv4InitD(filter);
     //filterSimpleTcpInitS(filter);
-    filterSimpleTcpInitSD(filter);
+    //filterSimpleTcpInitSD(filter);
     //filterSimpleUdpInitS(filter);
-    filterPrint(filter);*/
+    //filterPrint(filter);
 
     vector<filteredPacket_t> filteredPacketVec;
     filteredPacket_t filteredPacket;
@@ -81,9 +81,10 @@ int main(int argc, const char* argv[]) {
 #endif
     bool debugFilteredPacket = false;
     bool debugFilteredPacketVec = true;
-    bool debugFinalData = true;
+    bool debugFinalData = false;
 
-    cout << " ----- Open file" << endl;
+
+    //cout << " ----- Open file" << endl;
     ifstream pcapFile;
     pcapFile.open(inputFile.c_str(),  ios::binary);
 
@@ -91,15 +92,18 @@ int main(int argc, const char* argv[]) {
         cerr << "Pcap file couldn't open!" << endl;
         return 0;
     } else {
-        cout << "Pcap file successfully opened" << std::endl;
+        if(debugInfo)
+            cout << "Pcap file successfully opened" << std::endl;
     }
 
-    cout << " ----- Load file to array buffer[]" << endl;
+    if(debugInfo)
+        cout << " ----- Load file to array buffer[]" << endl;
     pcapFile.seekg(0, pcapFile.end);
     long sizeOfPcap = pcapFile.tellg();
     pcapFile.seekg(0, pcapFile.beg);
 
-    cout << "Size of pcap file: " << sizeOfPcap << endl;
+    if(debugInfo)
+        cout << "Size of pcap file: " << sizeOfPcap << endl;
     int pcapPointer = 0;
     int pcapPointerStart = 0;
     char * buffer;
@@ -111,7 +115,8 @@ int main(int argc, const char* argv[]) {
         cerr.flush();
         return 0;
     } else {
-        cout << "Pcap file successfully load" << std::endl;
+        if(debugInfo)
+            cout << "Pcap file successfully load" << std::endl;
     }
 
 ////    cout << " ----- Print file " << endl;
@@ -196,11 +201,12 @@ int main(int argc, const char* argv[]) {
                     // Padding hack
                     if(packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.ipHeader.size + packetHeader.etherHeader.size
                        < packetHeader.orig_len) {
-                        filteredPacket_t & filteredPacketTemp = filteredPacketVec.back();
-                        int value = filteredPacketTemp.macDataSize;
-                        filteredPacketTemp.macDataSize = packetHeader.orig_len - packetHeader.etherHeader.size;
+                        if(!filteredPacketVec.empty()) {
+                            filteredPacket_t & filteredPacketTemp = filteredPacketVec.back();
+                            int value = filteredPacketTemp.macDataSize;
+                            filteredPacketTemp.macDataSize = packetHeader.orig_len - packetHeader.etherHeader.size;
+                        }
                     }
-
                     if (debugTcpUdpHeader) {
                         cout << " ----- Parse TCP/UDP header" << endl;
                         tcpUdpPrint(packetHeader.etherHeader.ipHeader.tcpUdpHeader);
@@ -244,8 +250,11 @@ int main(int argc, const char* argv[]) {
         pcapPointer = pcapPointerStart + transferDataSizeByte;
         transferDataSizeByte = 0;
     }
-    cout << " ----- Read counter" << endl;
-    cout << "gcount: " << pcapFile.gcount() << endl;
+
+    if(debugInfo) {
+        cout << " ----- Read counter" << endl;
+        cout << "gcount: " << pcapFile.gcount() << endl;
+    }
 
     if(debugFilteredPacketVec) {
         filteredPacketPrintResult(filteredPacketVec, filter, debugFinalData);

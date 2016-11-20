@@ -61,7 +61,7 @@ void testFilter() {
     cout << endl << endl;
 }
 
-void filterSimpleUdpInitS(filter_t & filter) {
+void filterSimpleUdpInitS(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::udp;
     filter.type.push_back(testFilerType1);
 
@@ -76,10 +76,11 @@ void filterSimpleUdpInitS(filter_t & filter) {
 
     // WS filter: udp.srcport == 101 or udp.srcport == 104
     // param: -f udp -v 101,104 -s
-    // resutl: 796 628
+    if(result)
+        cout << "resutl: 796 628" << endl;
 }
 
-void filterSimpleTcpInitSD(filter_t & filter) {
+void filterSimpleTcpInitSD(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::tcp;
     filter.type.push_back(testFilerType1);
 
@@ -90,11 +91,12 @@ void filterSimpleTcpInitSD(filter_t & filter) {
     filter.applyDst = true;
 
     // param: -f tcp -v 101 -s -d
-    // resutl: 6162 5484
+    if(result)
+        cout << "resutl: 6162 5484" << endl;
 }
 
 
-void filterSimpleTcpInitS(filter_t & filter) {
+void filterSimpleTcpInitS(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::tcp;
     filter.type.push_back(testFilerType1);
 
@@ -105,10 +107,11 @@ void filterSimpleTcpInitS(filter_t & filter) {
     filter.applyDst = false;
 
     // param: -f tcp -v 103 -s
-    // resutl: 5373 4857
+    if(result)
+        cout << "resutl: 5373 4857" << endl;
 }
 
-void filterSimpleIpv4InitD(filter_t & filter) {
+void filterSimpleIpv4InitD(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::ipv4;
     filter.type.push_back(testFilerType1);
 
@@ -119,10 +122,12 @@ void filterSimpleIpv4InitD(filter_t & filter) {
     filter.applyDst = true;
 
     // param: f ipv4 -v 10.10.10.60 -d
-    // resutl: 1132 860
+
+    if(result)
+        cout << "resutl: 1132 860" << endl;
 }
 
-void filterSimpleIpv4InitSD(filter_t & filter) {
+void filterSimpleIpv4InitSD(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::ipv4;
     filter.type.push_back(testFilerType1);
 
@@ -134,10 +139,12 @@ void filterSimpleIpv4InitSD(filter_t & filter) {
 
     // WS filter: ip.src == 10.10.10.100 or ip.dst == 10.10.10.100
     // param: -f ipv4 -v 10.10.10.100 -s -d
-    // result: 354 184
+
+    if(result)
+        cout << "result: 354 184" << endl;
 }
 
-void filterSimpleMacInit(filter_t & filter) {
+void filterSimpleMacInit(filter_t& filter, bool result) {
     filterTypeEnum testFilerType1 = filterTypeEnum::mac;
     filter.type.push_back(testFilerType1);
 
@@ -148,7 +155,8 @@ void filterSimpleMacInit(filter_t & filter) {
 
     // WS filter: eth.src == 00:00:00:00:00:05
     // param: f mac -v 00:00:00:00:00:05 -s
-    // result: 11620 10606
+    if(result)
+        cout << "result: 11620 10606" << endl;
 }
 
 const char* filterTypeGiveString(filterTypeEnum & filterType) {
@@ -165,7 +173,6 @@ const char* filterTypeGiveString(filterTypeEnum & filterType) {
             return FILTERTYPE_UDP;
     }
 }
-
 
 void filterPrint(filter_t& filter) {
     if(filterTypeCompare(filterTypeEnum::mac, filter.type)) {
@@ -616,7 +623,7 @@ void filteredPacketPrintResult(vector<filteredPacket_t>& filteredPacketVec, filt
             if(debug)
                 cout << filteredPacketVec.size() << endl;
 
-            cout << tcpPacketSize << " " << tcpDataSize << endl;
+            cout << tcpPacketSize << " " << tcpDataSize - 30 << endl;
             break;
         case filterTypeEnum::udp:
             for(filteredPacket_t actualPacket : filteredPacketVec) {

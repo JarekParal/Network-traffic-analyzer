@@ -74,12 +74,12 @@ typedef struct filter_s{
 
 void testFilter();
 
-void filterSimpleUdpInitS(filter_t & filter);
-void filterSimpleTcpInitSD(filter_t & filter);
-void filterSimpleTcpInitS(filter_t & filter);
-void filterSimpleIpv4InitD(filter_t & filter);
-void filterSimpleIpv4InitSD(filter_t & filter);
-void filterSimpleMacInit(filter_t & filter);
+void filterSimpleUdpInitS(filter_t& filter, bool result = false);
+void filterSimpleTcpInitSD(filter_t& filter, bool result = false);
+void filterSimpleTcpInitS(filter_t& filter, bool result = false);
+void filterSimpleIpv4InitD(filter_t& filter, bool result = false);
+void filterSimpleIpv4InitSD(filter_t& filter, bool result = false);
+void filterSimpleMacInit(filter_t& filter, bool result = false);
 
 const char* filterTypeGiveString(filterTypeEnum & filterType);
 
