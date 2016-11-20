@@ -1,9 +1,9 @@
 CFLAGS=-std=c++11 
 BIN=analyzer
-CC=gcc
+CC=g++
 RM=rm -f
 
-ALL: main.o convert.o structures.o
-	$(CC) $(CFLAGS) -o $(BIN) main.o convert.o structures.o
+ALL:
+	$(CC) $(CFLAGS) -o $(BIN) main.cpp convert.cpp structures.cpp
 clean:
 	$(RM) *.o *.output $(BIN)
