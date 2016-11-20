@@ -12,7 +12,6 @@ void testFilter() {
     filterTypeEnum testFilerType1 = filterTypeEnum::ipv4;
     filter.type.push_back(testFilerType1);
 
-
     mac_addr_t testMac1 = {0,0,0,0,0,1};
     mac_addr_t testMac2 = {0,0,0,0,0,2};
     mac_addr_t testMac3 = {0,0,0,0,0,1};
@@ -62,6 +61,53 @@ void testFilter() {
     cout << endl << endl;
 }
 
+void filterSimpleUdpInitS(filter_t & filter) {
+    filterTypeEnum testFilerType1 = filterTypeEnum::udp;
+    filter.type.push_back(testFilerType1);
+
+    uint16_t testPort1 = 101;
+    filter.port.push_back(testPort1);
+
+    uint16_t testPort2 = 104;
+    filter.port.push_back(testPort2);
+
+    filter.applySrc = true;
+    filter.applyDst = false;
+
+    // WS filter: udp.srcport == 101 or udp.srcport == 104
+    // param: -f udp -v 101,104 -s
+    // resutl: 796 628
+}
+
+void filterSimpleTcpInitSD(filter_t & filter) {
+    filterTypeEnum testFilerType1 = filterTypeEnum::tcp;
+    filter.type.push_back(testFilerType1);
+
+    uint16_t testPort1 = 101;
+    filter.port.push_back(testPort1);
+
+    filter.applySrc = true;
+    filter.applyDst = true;
+
+    // param: -f tcp -v 101 -s -d
+    // resutl: 6162 5484
+}
+
+
+void filterSimpleTcpInitS(filter_t & filter) {
+    filterTypeEnum testFilerType1 = filterTypeEnum::tcp;
+    filter.type.push_back(testFilerType1);
+
+    uint16_t testPort1 = 103;
+    filter.port.push_back(testPort1);
+
+    filter.applySrc = true;
+    filter.applyDst = false;
+
+    // param: -f tcp -v 103 -s
+    // resutl: 5373 4857
+}
+
 void filterSimpleIpv4InitD(filter_t & filter) {
     filterTypeEnum testFilerType1 = filterTypeEnum::ipv4;
     filter.type.push_back(testFilerType1);
@@ -72,6 +118,7 @@ void filterSimpleIpv4InitD(filter_t & filter) {
     filter.applySrc = false;
     filter.applyDst = true;
 
+    // param: f ipv4 -v 10.10.10.60 -d
     // resutl: 1132 860
 }
 
@@ -149,7 +196,7 @@ void filterInit(filter_t & filter) {
 bool filterChecker(filter_t& filter, filteredPacket_t& actualPacket, filterTypeEnum actualType,
                    vector<filteredPacket_t>& filteredPacketVec) {
     if(filterTypeCompare(actualType, filter.type)) {
-        cout << actualPacket.packetNumber << ": Looking on this type of header: " << filterTypeGiveString(actualType) << endl;
+        //cout << actualPacket.packetNumber << ": Looking on this type of header: " << filterTypeGiveString(actualType) << endl;
 
         switch (actualType) {
             case filterTypeEnum::mac:
@@ -161,10 +208,16 @@ bool filterChecker(filter_t& filter, filteredPacket_t& actualPacket, filterTypeE
                     filteredPacketVec.push_back(actualPacket);
                 break;
             case filterTypeEnum::ipv6:
+                if(ipv6Checker(actualPacket, filter))
+                    filteredPacketVec.push_back(actualPacket);
                 break;
             case filterTypeEnum::tcp:
+                if(portChecker(actualPacket, filter))
+                    filteredPacketVec.push_back(actualPacket);
                 break;
             case filterTypeEnum::udp:
+                if(portChecker(actualPacket, filter))
+                    filteredPacketVec.push_back(actualPacket);
                 break;
         }
         return true;
@@ -195,10 +248,15 @@ bool filterTypeEqual(filterTypeEnum & packetType, filterTypeEnum & filterType) {
 }
 
 bool macsChecker(filteredPacket_t& actualPacket, filter_t& filter) {
+    bool applySrcBool = false;
+    bool applyDstBool = false;
+
     if(filter.applySrc)
-        return macsAddrsCompare(actualPacket.mac_src.addr_bytes, filter.mac);
+        applySrcBool = macsAddrsCompare(actualPacket.mac_src.addr_bytes, filter.mac);
     if(filter.applyDst)
-        return macsAddrsCompare(actualPacket.mac_dst.addr_bytes, filter.mac);
+        applyDstBool = macsAddrsCompare(actualPacket.mac_dst.addr_bytes, filter.mac);
+
+    return applySrcBool || applyDstBool;
 }
 
 bool macsAddrsCompare(uint8_t * packetMac, vector<mac_addr_t>& macAddrVec) {
@@ -237,6 +295,17 @@ bool ipv4Checker(filteredPacket_t& actualPacket, filter_t& filter) {
     return applySrcBool || applyDstBool;
 }
 
+bool ipv6Checker(filteredPacket_t& actualPacket, filter_t& filter) {
+    bool applySrcBool = false;
+    bool applyDstBool = false;
+
+    if(filter.applySrc)
+        applySrcBool = ipsAddrsCompare(actualPacket.ipv6_src.addr_bytes, filter.ipv6);
+    if(filter.applyDst)
+        applyDstBool = ipsAddrsCompare(actualPacket.ipv6_dst.addr_bytes, filter.ipv6);
+
+    return applySrcBool || applyDstBool;
+}
 
 template <typename T, typename V>
 bool ipsAddrsCompare(T* packetIp, vector<V>& ipAddrVec) {
@@ -271,6 +340,18 @@ void ipAddrEqualPrint(T* ip_addr1, T* ip_addr2) {
     cout << " => " << (ipAddrEqual(ip_addr1, ip_addr2) ? "true" : "false") << endl;
 }
 
+bool portChecker(filteredPacket_t& actualPacket, filter_t& filter) {
+    bool applySrcBool = false;
+    bool applyDstBool = false;
+
+    if(filter.applySrc)
+        applySrcBool = portsCompare(actualPacket.port_src, filter.port);
+    if(filter.applyDst)
+        applyDstBool = portsCompare(actualPacket.port_dst, filter.port);
+
+    return applySrcBool || applyDstBool;
+}
+
 bool portsCompare(uint16_t packetPort, vector<uint16_t>& portAddrVec) {
     for(uint16_t port : portAddrVec) {
         if(portEqual(port, packetPort))
@@ -297,6 +378,8 @@ void filteredPacketInit(filteredPacket_t & filteredPacket) {
     filteredPacket.macHeaderSize = 0;
     filteredPacket.mac_set = false;
 
+    filteredPacket.ipHeaderVersion = ipVersion::v4;
+
     ipv4AddrInit(filteredPacket.ipv4_dst.addr_bytes);
     ipv4AddrInit(filteredPacket.ipv4_src.addr_bytes);
     filteredPacket.ipv4PacketSize = 0;
@@ -312,6 +395,10 @@ void filteredPacketInit(filteredPacket_t & filteredPacket) {
 
     filteredPacket.port_dst = 0;
     filteredPacket.port_src = 0;
+    filteredPacket.tcpPacketSize = 0;
+    filteredPacket.tcpDataSize = 0;
+    filteredPacket.udpPacketSize = 0;
+    filteredPacket.udpDataSize = 0;
     filteredPacket.port_set = false;
 }
 
@@ -380,17 +467,19 @@ void ipAddrCopy(uint16_t* filteredPacketIpv6, uint16_t* packetHeaderIpv6) {
 void ipHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & packetHeader) {
     ip_header_t & ipHeader = packetHeader.etherHeader.ipHeader;
 
+    filteredPacket.ipHeaderVersion = ipHeader.version;
+
     if(ipHeader.version == ipVersion::v4) {
         ipAddrCopy(filteredPacket.ipv4_dst.addr_bytes, ipHeader.v4_dst);
         ipAddrCopy(filteredPacket.ipv4_src.addr_bytes, ipHeader.v4_src);
         filteredPacket.ipv4PacketSize = filteredPacket.macDataSize;
-        filteredPacket.ipv4DataSize = filteredPacket.macDataSize - ipHeader.size;
+        filteredPacket.ipv4DataSize = filteredPacket.macDataSize - ipHeader.size - 20;
         filteredPacket.ipv4_set = true;
     }else if(ipHeader.version == ipVersion::v6) {
         ipAddrCopy(filteredPacket.ipv6_dst.addr_bytes, ipHeader.v6_dst);
         ipAddrCopy(filteredPacket.ipv6_src.addr_bytes, ipHeader.v6_src);
         filteredPacket.ipv6PacketSize = filteredPacket.macDataSize;
-        filteredPacket.ipv6DataSize = filteredPacket.macDataSize - ipHeader.size;
+        filteredPacket.ipv6DataSize = filteredPacket.macDataSize - ipHeader.size - 20;
         filteredPacket.ipv6_set = true;
     }
     filteredPacket.next_prot = ipHeader.nextHeader_protocol;
@@ -400,13 +489,20 @@ void portCopy(uint16_t & filteredPacketPort, uint16_t & packetHeaderPort) {
     filteredPacketPort = packetHeaderPort;
 }
 
-void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, tcp_udp_header_t & tcpUdpHeader) {
+void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & packetHeader) {
+    tcp_udp_header_t & tcpUdpHeader = packetHeader.etherHeader.ipHeader.tcpUdpHeader;
+
     portCopy(filteredPacket.port_dst, tcpUdpHeader.dst_port);
     portCopy(filteredPacket.port_src, tcpUdpHeader.src_port);
+    filteredPacket.tcpPacketSize = filteredPacket.macDataSize;
+    if(packetHeader.etherHeader.ether_type == etherTypeEnum::IP)
+        filteredPacket.tcpDataSize = filteredPacket.ipv4DataSize - tcpUdpHeader.length;
+    if(packetHeader.etherHeader.ether_type == etherTypeEnum::IP6)
+        filteredPacket.tcpDataSize = filteredPacket.ipv6DataSize - tcpUdpHeader.length;
     filteredPacket.port_set = true;
 }
 
-void filteredPacketPrintResult(vector<filteredPacket_t> & filteredPacketVec, filter_t filter) {
+void filteredPacketPrintResult(vector<filteredPacket_t>& filteredPacketVec, filter_t filter, bool debug) {
     filterTypeEnum actualType = filter.type.at(0);
 
     int macPacketSize = 0;
@@ -415,44 +511,137 @@ void filteredPacketPrintResult(vector<filteredPacket_t> & filteredPacketVec, fil
     int ipPacketSize = 0;
     int ipDataSize = 0;
 
+    int tcpPacketSize = 0;
+    int tcpDataSize = 0;
+
+    int udpPacketSize = 0;
+    int udpDataSize = 0;
+
     switch (actualType) {
         case filterTypeEnum::mac:
             for(filteredPacket_t actualPacket : filteredPacketVec) {
-                filteredPacketPrint(actualPacket);
                 macPacketSize += actualPacket.macPacketSize;
                 macDataSize += actualPacket.macDataSize;
 
-                cout << "  " << actualPacket.macPacketSize
-                     << " (" << macPacketSize
-                     << ") " << actualPacket.macDataSize
-                     << " (" << macDataSize << ") " << endl;
+                if(debug) {
+                    filteredPacketPrint(actualPacket);
+                    cout << "  " << actualPacket.macPacketSize
+                         << " (" << macPacketSize
+                         << ") " << actualPacket.macDataSize
+                         << " (" << macDataSize << ") " << endl;
+                }
             }
 
-            cout << filteredPacketVec.size() << endl;
-            cout << "macPacketSize: " << macPacketSize << endl;
-            cout << "macDataSize: " << macDataSize << endl;
+            if(debug)
+                cout << filteredPacketVec.size() << endl;
+
+            cout << macPacketSize << " " << macDataSize << endl;
             break;
         case filterTypeEnum::ipv4:
             for(filteredPacket_t actualPacket : filteredPacketVec) {
-                filteredPacketPrint(actualPacket);
                 ipPacketSize += actualPacket.macPacketSize;
                 ipDataSize += actualPacket.ipv4DataSize;
 
-                cout << "  " << actualPacket.macPacketSize
-                     << " (" << ipPacketSize
-                     << ") " << actualPacket.ipv4DataSize
-                     << " (" << ipDataSize << ") " << endl;
+                if(debug) {
+                    filteredPacketPrint(actualPacket);
+                    cout << "  " << actualPacket.macPacketSize
+                         << " (" << ipPacketSize
+                         << ") " << actualPacket.ipv4DataSize
+                         << " (" << ipDataSize << ") " << endl;
+                }
             }
 
-            cout << filteredPacketVec.size() << endl;
-            cout << "ipPacketSize: " << ipPacketSize << endl;
-            cout << "ipDataSize: " << ipDataSize << endl;
+            if(debug)
+                cout << filteredPacketVec.size() << endl;
+
+            cout << ipPacketSize << " " << ipDataSize << endl;
             break;
         case filterTypeEnum::ipv6:
+            for(filteredPacket_t actualPacket : filteredPacketVec) {
+                ipPacketSize += actualPacket.macPacketSize;
+                ipDataSize += actualPacket.ipv6DataSize;
+
+                if(debug) {
+                    filteredPacketPrint(actualPacket);
+                    cout << "  " << actualPacket.macPacketSize
+                         << " (" << ipPacketSize
+                         << ") " << actualPacket.ipv6DataSize
+                         << " (" << ipDataSize << ") " << endl;
+                }
+            }
+
+            if(debug)
+                cout << filteredPacketVec.size() << endl;
+
+            cout << ipPacketSize << " " << ipDataSize << endl;
             break;
         case filterTypeEnum::tcp:
+
+            for(filteredPacket_t actualPacket : filteredPacketVec) {
+                tcpPacketSize += actualPacket.macPacketSize;
+                if(actualPacket.ipHeaderVersion == ipVersion::v4)
+                    tcpDataSize += actualPacket.ipv4DataSize;
+                else
+                   tcpDataSize += actualPacket.ipv6DataSize;
+                //tcpDataSize -= 20; // TCP header
+//                if(debug) {
+//                    filteredPacketPrint(actualPacket);
+//                    cout << "  " << actualPacket.macPacketSize
+//                         << " (" << ipPacketSize
+//                         << ") " << actualPacket.ipv6DataSize
+//                         << " (" << ipDataSize << ") " << endl;
+//                }
+
+                if(debug) {
+                    filteredPacketPrint(actualPacket);
+                    cout << "  " << actualPacket.macPacketSize
+                         << " (" << tcpPacketSize << ") ";
+
+                    if(actualPacket.ipHeaderVersion == ipVersion::v4) {
+                        cout << actualPacket.ipv4DataSize;
+                    }
+                    else {
+                        cout << actualPacket.ipv6DataSize;
+                    }
+
+                    cout  << " ("  << tcpDataSize << ") " << endl;
+                }
+            }
+
+            if(debug)
+                cout << filteredPacketVec.size() << endl;
+
+            cout << tcpPacketSize << " " << tcpDataSize << endl;
             break;
         case filterTypeEnum::udp:
+            for(filteredPacket_t actualPacket : filteredPacketVec) {
+                udpPacketSize += actualPacket.macPacketSize;
+                if(actualPacket.ipHeaderVersion == ipVersion::v4)
+                    udpDataSize += actualPacket.ipv4DataSize;
+                else
+                    udpDataSize += actualPacket.ipv6DataSize;
+                udpDataSize -= 8; // UDP header
+
+                if(debug) {
+                    filteredPacketPrint(actualPacket);
+                    cout << "  " << actualPacket.macPacketSize
+                         << " (" << udpPacketSize << ") ";
+
+                    if(actualPacket.ipHeaderVersion == ipVersion::v4) {
+                        cout << actualPacket.ipv4DataSize;
+                    }
+                    else {
+                        cout << actualPacket.ipv6DataSize;
+                    }
+
+                    cout  << " ("  << udpDataSize << ") " << endl;
+                }
+            }
+
+            if(debug)
+                cout << filteredPacketVec.size() << endl;
+
+            cout << udpPacketSize << " " << udpDataSize << endl;
             break;
     }
 }

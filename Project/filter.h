@@ -19,12 +19,15 @@ typedef struct filteredPacket_s{
     int macPacketSize;
     int macDataSize;
     int macHeaderSize;
-    bool mac_set;
 
+    ipVersion ipHeaderVersion;
+
+    bool mac_set;
     ipv4_addr_t ipv4_src;
     ipv4_addr_t ipv4_dst;
     int ipv4PacketSize;
     int ipv4DataSize;
+
     bool ipv4_set;
 
     ipv6_addr_t ipv6_src;
@@ -37,6 +40,10 @@ typedef struct filteredPacket_s{
 
     uint16_t port_src;
     uint16_t port_dst;
+    int tcpPacketSize;
+    int tcpDataSize;
+    int udpPacketSize;
+    int udpDataSize;
     bool port_set;
 } filteredPacket_t;
 
@@ -67,6 +74,9 @@ typedef struct filter_s{
 
 void testFilter();
 
+void filterSimpleUdpInitS(filter_t & filter);
+void filterSimpleTcpInitSD(filter_t & filter);
+void filterSimpleTcpInitS(filter_t & filter);
 void filterSimpleIpv4InitD(filter_t & filter);
 void filterSimpleIpv4InitSD(filter_t & filter);
 void filterSimpleMacInit(filter_t & filter);
@@ -94,6 +104,7 @@ void macAddrEqualPrint(uint8_t * mac_addr1, uint8_t * mac_addr2);
 
 // ----- IP
 bool ipv4Checker(filteredPacket_t& actualPacket, filter_t& filter);
+bool ipv6Checker(filteredPacket_t& actualPacket, filter_t& filter);
 template <typename T, typename V>
 bool ipsAddrsCompare(T* packetIp, vector<V>& ipAddrVec);
 //bool ipsAddrsCompare(uint8_t* packetIpv4, vector<ipv4_addr_t>& ipAddrVec)
@@ -103,6 +114,7 @@ bool ipAddrEqual(uint16_t * ip_addr1, uint16_t * ip_addr2);
 
 template <typename T>
 void ipAddrEqualPrint(T* ip_addr1, T* ip_addr2);
+bool portChecker(filteredPacket_t& actualPacket, filter_t& filter);
 //void ipAddrEqualPrint(uint16_t * ip_addr1, uint16_t * ip_addr2);
 
 // ----- Port
@@ -123,8 +135,8 @@ void ipAddrCopy(uint16_t* filteredPacketIpv6, uint16_t* packetHeaderIpv6);
 void ipHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & packetHeader);
 
 void portCopy(uint16_t & filteredPacketPort, uint16_t & packetHeaderPort);
-void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, tcp_udp_header_t & tcpUdpHeader);
+void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & packetHeader);
 
-void filteredPacketPrintResult(vector<filteredPacket_t> & filteredPacketVec, filter_t filter);
+void filteredPacketPrintResult(vector<filteredPacket_t>& filteredPacketVec, filter_t filter, bool debug = false);
 
 #endif //ISA_PROJECT_FILTER_H
