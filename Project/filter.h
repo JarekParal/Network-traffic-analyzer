@@ -62,4 +62,19 @@ bool portsCompare(uint16_t packetPort, vector<uint16_t>& portAddrVec);
 bool portEqual(uint16_t port1, uint16_t port2);
 void portEqualPrint(uint16_t port1, uint16_t port2);
 
+// ----- Filtered packet
+typedef struct filteredPacket_s{
+    mac_addr_t mac_src;
+    mac_addr_t mac_dst;
+    ipv4_addr_t ipv4_src;
+    ipv4_addr_t ipv4_dst;
+    ipv6_addr_t ipv6_src;
+    ipv6_addr_t ipv6_dst;
+    uint16_t port_src;
+    uint16_t port_dst;
+} filteredPacket_t;
+
+void filteredPacketInit(filteredPacket_t & filteredPacket);
+
+
 #endif //ISA_PROJECT_FILTER_H

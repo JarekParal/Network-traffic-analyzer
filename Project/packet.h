@@ -186,4 +186,14 @@ void tcpUdpPrint(tcp_udp_header_t& tcpUdpHeader);
 
 void packetPrint(pcap_packet_hdr_t& packetHeader, int packetNumber, int transferDataSizeByte);
 
+
+// ----- Init header
+void macAddrInit(uint8_t * macAddr);
+void etherHeaderInit(ether_header_t & etherHeader);
+void ipv4AddrInit(uint8_t * ipAddr);
+void ipv6AddrInit(uint16_t * ipAddr);
+void ipHeaderInit(ip_header_t & ipHeader);
+void tcpUdpHeaderInit(tcp_udp_header_t & tcpUdpHeader);
+void packetHeaderInit(pcap_packet_hdr_t & pcapPacketHeader);
+
 #endif //ISA_PROJECT_STRUCTURES_H

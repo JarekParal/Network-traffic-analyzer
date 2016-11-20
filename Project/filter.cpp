@@ -140,3 +140,16 @@ bool portEqual(uint16_t port1, uint16_t port2) {
 void portEqualPrint(uint16_t port1, uint16_t port2) {
     cout << port1 << " == " << port2 << " => " << (portEqual(port1, port2) ? "true" : "false") << endl;
 }
+
+void filteredPacketInit(filteredPacket_t & filteredPacket) {
+    macAddrInit(filteredPacket.mac_dst.addr_bytes);
+    macAddrInit(filteredPacket.mac_src.addr_bytes);
+
+    ipv4AddrInit(filteredPacket.ipv4_dst.addr_bytes);
+    ipv4AddrInit(filteredPacket.ipv4_src.addr_bytes);
+    ipv6AddrInit(filteredPacket.ipv6_dst.addr_bytes);
+    ipv6AddrInit(filteredPacket.ipv6_src.addr_bytes);
+
+    filteredPacket.port_dst = 0;
+    filteredPacket.port_src = 0;
+}

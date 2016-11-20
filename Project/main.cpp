@@ -15,17 +15,25 @@ void transferDataPrint(int transferData) {
 int main() {
     testFilter();
 
-    return 0;
+    vector<filteredPacket_t> filteredPacketVec;
+    filteredPacket_t filteredPacket;
+    filteredPacketInit(filteredPacket);
 
     ////cout << " ----- Init variable << endl;
     int transferDataSizeByte = 0;
     int packetNumber = 0;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
+    packetHeaderInit(packetHeader);
 
     ether_header_t etherHeader;
+    etherHeaderInit(etherHeader);
+
     ip_header_t ipHeader;
+    ipHeaderInit(ipHeader);
+
     tcp_udp_header_t tcpUdpHeader;
+    tcpUdpHeaderInit(tcpUdpHeader);
 
 //#define fullDebug
     ////cout << " ----- Debug setting << endl;
@@ -97,8 +105,9 @@ int main() {
     }
 
     while(pcapPointer < sizeOfPcap) {
-        packetHeader.etherHeader.ether_type = etherTypeEnum::unk;
-        packetHeader.etherHeader.ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
+        //packetHeader.etherHeader.ether_type = etherTypeEnum::unk;
+        //packetHeader.etherHeader.ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
+        packetHeaderInit(packetHeader);
 
         pcapPacketHeaderParse(packetHeader, buffer, pcapPointer);
         if (debugPcapPacketHeader) {

@@ -381,3 +381,66 @@ void packetPrint(pcap_packet_hdr_t& packetHeader, int packetNumber, int transfer
     cout << tcpUdpHeader.src_port << " -> " << tcpUdpHeader.dst_port;
     cout << endl;
 }
+
+
+// ----- Init header
+
+void macAddrInit(uint8_t * macAddr) {
+    for(int i = 0; i < 6; ++i)
+        macAddr[i] = 0;
+}
+
+void etherHeaderInit(ether_header_t & etherHeader) {
+    macAddrInit(etherHeader.ether_dhost);
+    macAddrInit(etherHeader.ether_shost);
+
+    etherHeader.ether_type = etherTypeEnum::unk;
+    etherHeader.size = 0;
+    etherHeader.vlan802_1Q = false;
+}
+
+void ipv4AddrInit(uint8_t * ipAddr) {
+    for(int i = 0; i < 4; ++i)
+        ipAddr[i] = 0;
+}
+
+void ipv6AddrInit(uint16_t * ipAddr) {
+    for(int i = 0; i < 8; ++i)
+        ipAddr[i] = 0;
+}
+
+void ipHeaderInit(ip_header_t & ipHeader) {
+    ipHeader.version = static_cast<ipVersion>(0);
+
+    ipv4AddrInit(ipHeader.v4_src);
+    ipv4AddrInit(ipHeader.v4_dst);
+
+    ipv6AddrInit(ipHeader.v6_src);
+    ipv6AddrInit(ipHeader.v6_dst);
+
+    ipHeader.header_length = 0;
+    ipHeader.total_length = 0;
+    ipHeader.payload_length = 0;
+    ipHeader.nextHeader_length = 0;
+    ipHeader.nextHeader_protocol = ipNextHeaderProtocol::unk;
+    ipHeader.size = 0;
+}
+
+void tcpUdpHeaderInit(tcp_udp_header_t & tcpUdpHeader) {
+    tcpUdpHeader.src_port = 0;
+    tcpUdpHeader.dst_port = 0;
+    tcpUdpHeader.data_offset = 0;
+    tcpUdpHeader.length = 0;
+    tcpUdpHeader.tcp_udp = ipNextHeaderProtocol::unk;
+}
+
+void packetHeaderInit(pcap_packet_hdr_t & pcapPacketHeader) {
+    pcapPacketHeader.ts_sec = 0;
+    pcapPacketHeader.ts_usec = 0;
+    pcapPacketHeader.incl_len = 0;
+    pcapPacketHeader.orig_len = 0;
+
+    etherHeaderInit(pcapPacketHeader.etherHeader);
+    ipHeaderInit(pcapPacketHeader.etherHeader.ipHeader);
+    tcpUdpHeaderInit(pcapPacketHeader.etherHeader.ipHeader.tcpUdpHeader);
+}
