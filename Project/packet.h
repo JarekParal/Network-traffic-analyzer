@@ -13,7 +13,6 @@
 #include <sstream> // std::ostringstream
 
 
-
 // Source: http://stackoverflow.com/a/4433027
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN 1
@@ -33,6 +32,27 @@
 #endif
 
 #include "convert.h"
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::setw;
+using std::setfill;
+using std::string;
+
+
+// ----- Base struct
+typedef struct {
+    uint8_t addr_bytes[6];
+} mac_addr_t;
+
+typedef struct {
+    uint8_t addr_bytes[4];
+} ipv4_addr_t;
+
+typedef struct {
+    uint16_t addr_bytes[8];
+} ipv6_addr_t;
 
 
 // ----- IP - ipNextHeaderProtocol

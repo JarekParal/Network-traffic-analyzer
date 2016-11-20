@@ -3,7 +3,8 @@
 #include <fstream>
 #include <cstring>
 
-#include "structures.h"
+#include "packet.h"
+#include "filter.h"
 
 using namespace std;
 
@@ -12,22 +13,19 @@ void transferDataPrint(int transferData) {
 }
 
 int main() {
+    testFilter();
+
     ////cout << " ----- Init variable << endl;
     int transferDataSizeByte = 0;
     int packetNumber = 0;
     pcap_glob_hdr_t globalHeader;
     pcap_packet_hdr_t packetHeader;
 
-    //packetHeader.etherHeader = new ether_header_t;
-    //packetHeader.etherHeader->ipHeader = new ip_header_t;
-    //packetHeader.etherHeader->ipHeader->tcpUdpHeader = new tcp_udp_header_t;
-
     ether_header_t etherHeader;
     ip_header_t ipHeader;
     tcp_udp_header_t tcpUdpHeader;
 
 //#define fullDebug
-
     ////cout << " ----- Debug setting << endl;
 #ifdef fullDebug
     bool debugPcapGlobalHeader = true;

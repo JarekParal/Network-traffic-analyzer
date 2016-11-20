@@ -1,15 +1,7 @@
 //
 // Created by JarekParal (xparal02@stud.fit.vutbr.cz) on 13.11.2016.
 //
-#include "structures.h"
-
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::setw;
-using std::setfill;
-using std::string;
-
+#include "packet.h"
 
 int inet_pton_patch() {
 #ifdef _WIN32

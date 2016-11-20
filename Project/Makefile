@@ -4,6 +4,6 @@ CC=g++
 RM=rm -f
 
 ALL:
-	$(CC) $(CFLAGS) -o $(BIN) main.cpp convert.cpp structures.cpp
+	$(CC) $(CFLAGS) -o $(BIN) main.cpp convert.cpp packet.cpp filter.cpp
 clean:
 	$(RM) *.o *.output $(BIN)
