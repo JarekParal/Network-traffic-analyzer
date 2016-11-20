@@ -80,7 +80,7 @@ enum class etherTypeEnum {
     PUP = 0x0200,		/* PUP protocol */
     IP  = 0x0800,		/* IP(v4) protocol */
     ARP = 0x0806,		/* Addr. resolution protocol (ARP) */
-    IP6 = 0x08DD,		/* IPv6 protocol */
+    IP6 = 0x86DD,		/* IPv6 protocol */
     e8021Q =  0x0810,	/* 802.1Q tag (optional) */
     unk = 0x0001        /* unknown - my internal type */
     //TODO: Check if "unk" work correctly!

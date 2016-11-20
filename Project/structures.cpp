@@ -215,10 +215,12 @@ int ipHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointer) {
                 = static_cast<ipNextHeaderProtocol>(toUint8(buffer, pointer));
         pointer += 1;
 
-        memcpy(ipHeader.v6_src, buffer + pointer, 8);
-        pointer += 8;
-        memcpy(ipHeader.v6_dst, buffer + pointer, 8);
-        pointer += 8;
+        for(int i = 0; i < 8; ++i) {
+            ipHeader.v6_src[i] = toUint16(buffer,pointer);
+        }
+        for(int i = 0; i < 8; ++i) {
+            ipHeader.v6_dst[i] = toUint16(buffer,pointer);
+        }
     }
     else
         return 0; // error
@@ -247,12 +249,13 @@ void ipAddrPrint(uint16_t* ipAddr, bool printLine) {
     for(int i = 0; i < 8; i++){
         cout << std::hex << setw(2) << setfill('0') << static_cast<uint16_t>(ipAddr[i]);
 
-        if(i != 5)
+        if(i != 7)
             cout << ":";
         else {
             if(printLine) {
                 cout << endl;
             }
+            cout << std::dec;
         }
     }
 }
