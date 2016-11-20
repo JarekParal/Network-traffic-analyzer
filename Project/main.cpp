@@ -13,13 +13,19 @@ void transferDataPrint(int transferData) {
 }
 
 int main() {
-    testFilter();
+    //testFilter();
+
+    cout << " ----- Init filter" << endl;
+    filter_t filter;
+    filterSimpleMacInit(filter);
+    //filterSimpleIpv4InitSD(filter);
+    filterPrint(filter);
 
     vector<filteredPacket_t> filteredPacketVec;
     filteredPacket_t filteredPacket;
     //filteredPacketInit(filteredPacket);
 
-    ////cout << " ----- Init variable << endl;
+    ////cout << " ----- Init variable" << endl;
     int transferDataSizeByte = 0;
     int packetNumber = 0;
     pcap_glob_hdr_t globalHeader;
@@ -52,10 +58,10 @@ int main() {
     bool debugIpHeader = false;
     bool debugTcpUdpHeader = false;
     bool debugInfo = false;
-    bool debugPacket = true;
+    bool debugPacket = false;
 #endif
-
-    bool debugFilteredPacketPrint = true;
+    bool debugFilteredPacket = false;
+    bool debugFilteredPacketVec = true;
 
     cout << " ----- Open file" << endl;
     ifstream pcapFile;
@@ -121,38 +127,57 @@ int main() {
         pcapPointerStart = pcapPointer;
         packetNumber++;
         filteredPacket.packetNumber = packetNumber;
+        packetHeader.packetNumber = packetNumber;
 
         if(debugInfo) {
             cout << "-- Packet number: " << decAndHexStr(packetNumber) << endl;
             cout << "-- Pcap pointer: " << decAndHexStr(pcapPointer) << endl;
         }
 
+        //// ----- Ethernet packet
         transferDataSizeByte += ethernetHeaderParse(packetHeader, buffer, pcapPointer);
         if (debugEthernetHeader) {
             cout << " ----- Parse ethernet header" << endl;
             ethernetHeaderPrint(packetHeader.etherHeader);
             transferDataPrint(transferDataSizeByte);
         }
-        macHeaderCopy(filteredPacket, packetHeader.etherHeader);
-        if(debugFilteredPacketPrint)
+        macHeaderCopy(filteredPacket, packetHeader);
+        if(debugFilteredPacket)
             filteredPacketPrint(filteredPacket);
+
+        (filterChecker(filter, filteredPacket, filterTypeEnum::mac, filteredPacketVec));
+            //continue;
 
         switch (packetHeader.etherHeader.ether_type) {
             case etherTypeEnum::IP:
             case etherTypeEnum::IP6:
+                //// ----- IP packet
                 transferDataSizeByte += ipHeaderParse(packetHeader , buffer, pcapPointer);
                 if (debugIpHeader) {
                     cout << " ----- Parse IP header" << endl;
                     ipHeaderPrint(packetHeader.etherHeader.ipHeader);
                     transferDataPrint(transferDataSizeByte);
                 }
-                ipHeaderCopy(filteredPacket, packetHeader.etherHeader.ipHeader);
-                if(debugFilteredPacketPrint)
+                ipHeaderCopy(filteredPacket, packetHeader);
+                if(debugFilteredPacket)
                     filteredPacketPrint(filteredPacket);
 
+                filterChecker(filter, filteredPacket, filterTypeEnum::ipv4, filteredPacketVec);
+
+
+                //// ----- TCP/UDP packet
                 if(packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::TCP ||
                     packetHeader.etherHeader.ipHeader.nextHeader_protocol == ipNextHeaderProtocol::UDP) {
                     transferDataSizeByte += tcpUdpHeaderParse(packetHeader, buffer, pcapPointer);
+
+                    // Padding hack
+                    if(packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.ipHeader.size + packetHeader.etherHeader.size
+                       < packetHeader.orig_len) {
+                        filteredPacket_t & filteredPacketTemp = filteredPacketVec.back();
+                        int value = filteredPacketTemp.macDataSize;
+                        cerr << endl << value << " - " << packetHeader.packetNumber << endl;
+                        filteredPacketTemp.macDataSize = packetHeader.orig_len - packetHeader.etherHeader.size;
+                    }
 
                     if (debugTcpUdpHeader) {
                         cout << " ----- Parse TCP/UDP header" << endl;
@@ -160,7 +185,7 @@ int main() {
                         transferDataPrint(transferDataSizeByte);
                     }
                     tcpUdpHeaderCopy(filteredPacket, packetHeader.etherHeader.ipHeader.tcpUdpHeader);
-                    if(debugFilteredPacketPrint)
+                    if(debugFilteredPacket)
                         filteredPacketPrint(filteredPacket);
                 } else {
                     transferDataSizeByte += packetHeader.etherHeader.ipHeader.nextHeader_length;
@@ -195,5 +220,8 @@ int main() {
     cout << " ----- Read counter" << endl;
     cout << "gcount: " << pcapFile.gcount() << endl;
 
+    if(debugFilteredPacketVec) {
+        filteredPacketPrintResult(filteredPacketVec, filter);
+    }
     return 0;
 }

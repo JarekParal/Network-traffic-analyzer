@@ -154,10 +154,11 @@ typedef struct pcap_packet_hdr_s {
     uint32_t orig_len;       /* actual length of packet */
     // suma = 32 * 4 bits = 128 bits = 16 bytes
 
+    int packetNumber;
     ether_header_t etherHeader;
 } pcap_packet_hdr_t; //pcaprec_hdr_t;
 
-
+string printTrueOrFalse(bool value);
 void printDecAndHex(int num);
 std::string decAndHexStr(int num);
 

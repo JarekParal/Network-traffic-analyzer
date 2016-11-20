@@ -36,6 +36,13 @@ namespace stdPatch
     }
 }
 
+string printTrueOrFalse(bool value) {
+    if(value)
+        return string("true");
+    else
+        return string("false");
+}
+
 void printDecAndHex(int num) {
     cout << num << " (0x" << std::hex
          << num << ")"  << std::dec;
@@ -338,9 +345,17 @@ int tcpUdpHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointe
 
     //TODO: ethernet padding // https://www.facebook.com/groups/fitbit2014/permalink/933249876779199/?comment_id=933253073445546&reply_comment_id=933346823436171&comment_tracking=%7B%22tn%22%3A%22R%22%7D
     if((packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.size + packetHeader.etherHeader.ipHeader.size)
-       < packetHeader.orig_len)
-        return packetHeader.orig_len - packetHeader.etherHeader.size - packetHeader.etherHeader.ipHeader.size;
-    else
+       < packetHeader.orig_len) {
+        int padding = packetHeader.orig_len - packetHeader.etherHeader.size - packetHeader.etherHeader.ipHeader.size;
+
+        if(packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.ipHeader.size + packetHeader.etherHeader.size
+           != packetHeader.orig_len) {
+            int result = packetHeader.orig_len - (packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.ipHeader.size + packetHeader.etherHeader.size);
+
+            //packetHeader.etherHeader.size += result;
+        }
+        return padding;
+    } else
         return packetHeader.etherHeader.ipHeader.nextHeader_length; //pointer - pointerStartValue;
 }
 
@@ -445,6 +460,7 @@ void packetHeaderInit(pcap_packet_hdr_t & pcapPacketHeader) {
     pcapPacketHeader.incl_len = 0;
     pcapPacketHeader.orig_len = 0;
 
+    pcapPacketHeader.packetNumber = 0;
     etherHeaderInit(pcapPacketHeader.etherHeader);
     ipHeaderInit(pcapPacketHeader.etherHeader.ipHeader);
     tcpUdpHeaderInit(pcapPacketHeader.etherHeader.ipHeader.tcpUdpHeader);
