@@ -21,8 +21,10 @@ using std::string;
 #undef ERROR
 
 // That's is nasty, but no time for dig a cleaner solution
+#ifdef _WIN32
 #ifndef snprintf
 #define snprintf _snprintf
+#endif
 #endif
 
 #define TO_STRING(msg, ...)                             \

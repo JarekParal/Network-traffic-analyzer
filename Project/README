@@ -1,0 +1,10 @@
+xparal02
+
+Rozšíření:
+A (1.5b) - Možnosť zadania viacerých hodnôt filtra
+B (3.5b) - začata, nedokončena -> nefunguje
+
+Neimplementováno:
+filtr top10
+zpracování IPv6 adresy jako hodnoty filtru
+dokumentace
