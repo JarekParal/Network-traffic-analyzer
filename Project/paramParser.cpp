@@ -2,7 +2,7 @@
 // Created by JarekParal (xparal02@stud.fit.vutbr.cz) on 20.11.2016.
 //
 
-#include "ParamParser.h"
+#include "paramParser.h"
 #include "packet.h"
 
 #include <iostream>

@@ -485,13 +485,13 @@ void ipHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & packetH
         ipAddrCopy(filteredPacket.ipv4_dst.addr_bytes, ipHeader.v4_dst);
         ipAddrCopy(filteredPacket.ipv4_src.addr_bytes, ipHeader.v4_src);
         filteredPacket.ipv4PacketSize = filteredPacket.macDataSize;
-        filteredPacket.ipv4DataSize = filteredPacket.macDataSize - ipHeader.size - 20;
+        filteredPacket.ipv4DataSize = filteredPacket.macDataSize - ipHeader.size;
         filteredPacket.ipv4_set = true;
     }else if(ipHeader.version == ipVersion::v6) {
         ipAddrCopy(filteredPacket.ipv6_dst.addr_bytes, ipHeader.v6_dst);
         ipAddrCopy(filteredPacket.ipv6_src.addr_bytes, ipHeader.v6_src);
         filteredPacket.ipv6PacketSize = filteredPacket.macDataSize;
-        filteredPacket.ipv6DataSize = filteredPacket.macDataSize - ipHeader.size - 20;
+        filteredPacket.ipv6DataSize = filteredPacket.macDataSize - ipHeader.size;
         filteredPacket.ipv6_set = true;
     }
     filteredPacket.next_prot = ipHeader.nextHeader_protocol;
@@ -515,7 +515,7 @@ void tcpUdpHeaderCopy(filteredPacket_t & filteredPacket, pcap_packet_hdr_t & pac
 }
 
 void filteredPacketPrintResult(vector<filteredPacket_t>& filteredPacketVec, filter_t filter, bool debug) {
-    filterTypeEnum actualType = filter.type.at(0);
+    filterTypeEnum actualType = filter.type.front();
 
     int macPacketSize = 0;
     int macDataSize = 0;
@@ -595,15 +595,7 @@ void filteredPacketPrintResult(vector<filteredPacket_t>& filteredPacketVec, filt
                     tcpDataSize += actualPacket.ipv4DataSize;
                 else
                    tcpDataSize += actualPacket.ipv6DataSize;
-                //tcpDataSize -= 20; // TCP header
-//                if(debug) {
-//                    filteredPacketPrint(actualPacket);
-//                    cout << "  " << actualPacket.macPacketSize
-//                         << " (" << ipPacketSize
-//                         << ") " << actualPacket.ipv6DataSize
-//                         << " (" << ipDataSize << ") " << endl;
-//                }
-
+                tcpDataSize -= 20; // TCP header
                 if(debug) {
                     filteredPacketPrint(actualPacket);
                     cout << "  " << actualPacket.macPacketSize
