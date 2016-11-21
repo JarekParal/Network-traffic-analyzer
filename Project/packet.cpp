@@ -3,26 +3,6 @@
 //
 #include "packet.h"
 
-int inet_pton_patch() {
-#ifdef _WIN32
-    //InetPton()
-    //https://msdn.microsoft.com/en-us/library/cc805844(v=vs.85).aspx
-    //http://stackoverflow.com/questions/15660203/inet-pton-identifier-not-found
-    //https://memset.wordpress.com/2010/10/09/inet_ntop-for-win32/
-    //https://www.ipv6.cz/Inetpton()
-    //http://stackoverflow.com/questions/17379741/issues-when-using-wsaaddresstostring
-#else
-    if (inet_pton(AF_INET6, ip6str, &result) == 1) // success!
-    {
-        //successfully parsed string into "result"
-    }
-    else
-    {
-        //failed, perhaps not a valid representation of IPv6?
-    }
-#endif
-}
-
 // Source stdPatch: http://stackoverflow.com/a/20861692
 namespace stdPatch
 {
@@ -167,7 +147,6 @@ int ethernetHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& poin
     etherHeader.size = pointer - pointerStartValue;
     return etherHeader.size;
 
-//    // TODO: Doesn't work right - check why
 //    memcpy(etherHeader.ether_type, buffer + pointer, 2);
 //    pointer += 2;
 }
@@ -343,7 +322,6 @@ int tcpUdpHeaderParse(pcap_packet_hdr_t& packetHeader, char* buffer, int& pointe
     else
         return 0; // error
 
-    //TODO: ethernet padding // https://www.facebook.com/groups/fitbit2014/permalink/933249876779199/?comment_id=933253073445546&reply_comment_id=933346823436171&comment_tracking=%7B%22tn%22%3A%22R%22%7D
     if((packetHeader.etherHeader.ipHeader.nextHeader_length + packetHeader.etherHeader.size + packetHeader.etherHeader.ipHeader.size)
        < packetHeader.orig_len) {
         int padding = packetHeader.orig_len - packetHeader.etherHeader.size - packetHeader.etherHeader.ipHeader.size;

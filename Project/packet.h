@@ -109,7 +109,6 @@ enum class etherTypeEnum {
     IP6 = 0x86DD,		/* IPv6 protocol */
     e8021Q =  0x0810,	/* 802.1Q tag (optional) */
     unk = 0x0001        /* unknown - my internal type */
-    //TODO: Check if "unk" work correctly!
 };
 
 const char ETHERTYPE_IP_STRING[] = "IPv4";
